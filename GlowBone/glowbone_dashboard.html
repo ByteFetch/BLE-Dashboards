@@ -1,0 +1,1444 @@
+## Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowBone Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0f1117;
+  color: #e0e0e0;
+  font-size: 14px;
+  padding: 8px;
+}
+h2 { font-size: 16px; color: #fff; margin-bottom: 0; letter-spacing: 0.5px; }
+h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.section {
+  background: #1a1d27;
+  border: 1px solid #2a2d3a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row + .row { margin-top: 6px; }
+
+/* Connect bar */
+#connectBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#connectBtn:hover { background: #2563eb; }
+#connectBtn:disabled { background: #374151; cursor: default; }
+#status {
+  color: #9ca3af;
+  font-size: 13px;
+}
+#statusDot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #374151;
+  margin-right: 6px;
+  transition: background 0.3s;
+}
+#statusDot.connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+
+/* Effect cycle pill-chain */
+.cycle-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: #2a2d3a;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+  white-space: nowrap;
+}
+.cycle-pill:hover { background: #374151; }
+.cycle-pill.active { background: #3b82f6; color: #fff; font-weight: 600; }
+.cycle-arrow { color: #374151; font-size: 11px; align-self: center; }
+
+/* Audio bars — Change 1: bars container is fixed width, flex-shrink:0 */
+.bar-row { display: flex; gap: 8px; align-items: flex-end; height: 60px; }
+.bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+.bar-bg {
+  width: 100%; height: 50px;
+  background: #2a2d3a;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.bar-fill {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: #3b82f6;
+  border-radius: 4px;
+  height: 0%;
+  transition: height 0.05s;
+}
+.bar-fill.bass   { background: #ef4444; }
+.bar-fill.mid    { background: #f59e0b; }
+.bar-fill.treble { background: #22c55e; }
+.bar-fill.energy { background: #8b5cf6; }
+.bar-label { font-size: 11px; color: #6b7280; }
+.beat-row { display: flex; gap: 10px; margin-top: 8px; }
+.beat-chip {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  background: #2a2d3a;
+  color: #6b7280;
+  transition: background 0.1s, color 0.1s;
+}
+.beat-chip.active { background: #f59e0b; color: #0f1117; }
+.beat-chip.drop-active { background: #ef4444; color: #fff; }
+
+/* IMU gauges */
+.imu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.imu-cell {
+  background: #2a2d3a;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+}
+.imu-label { font-size: 11px; color: #6b7280; margin-bottom: 2px; }
+.imu-val { font-size: 15px; font-weight: 600; color: #e0e0e0; font-variant-numeric: tabular-nums; }
+.imu-row { display: flex; gap: 8px; margin-top: 8px; }
+.imu-wide {
+  background: #2a2d3a;
+  border-radius: 6px;
+  padding: 8px;
+  flex: 1;
+  text-align: center;
+}
+.idle-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  background: #374151;
+  color: #9ca3af;
+}
+.idle-badge.active { background: #1d4ed8; color: #bfdbfe; }
+
+/* Tap indicator pills — 4 persistent pills, flash on event */
+.tap-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  background: #2a2d3a;
+  color: #6b7280;
+  transition: background 0.15s, color 0.15s;
+}
+.tap-pill.active { background: #d97706; color: #fef3c7; }
+
+.overlay-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  background: #374151;
+  color: #9ca3af;
+  transition: background 0.2s, color 0.2s;
+}
+.overlay-chip.active { background: #7c3aed; color: #ede9fe; }
+
+/* Spin color classes */
+.spin-slow { color: #9ca3af; }
+.spin-mid  { color: #f59e0b; }
+.spin-fast { color: #22d3ee; }
+
+/* Tilt bar */
+.tilt-bar-bg {
+  height: 4px;
+  background: #374151;
+  border-radius: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+.tilt-bar-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.1s;
+}
+
+/* Mode / brightness bar */
+.mode-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mode-badge {
+  background: #3b82f6;
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 120px;
+  text-align: center;
+}
+.bri-bar-bg {
+  flex: 1;
+  height: 10px;
+  background: #2a2d3a;
+  border-radius: 5px;
+  overflow: hidden;
+  min-width: 80px;
+}
+.bri-bar-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 5px;
+  width: 0%;
+  transition: width 0.1s;
+}
+.bri-val { font-size: 13px; color: #9ca3af; min-width: 30px; text-align: right; }
+
+/* Mode selector in controls */
+#modeSelect option[data-skipped] { color: #4b5563; font-style: italic; }
+
+/* Audio log + Motion log */
+#audioLog, #motionLog {
+  height: 65px;
+  overflow-y: auto;
+  background: #0f1117;
+  border: 1px solid #2a2d3a;
+  border-radius: 4px;
+  padding: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #6b7280;
+}
+#audioLog .log-line, #motionLog .log-line { white-space: pre; }
+
+/* Settings panel */
+.settings-table { width: auto; border-collapse: collapse; }
+.settings-table th {
+  text-align: left;
+  font-size: 11px;
+  color: #6b7280;
+  padding: 3px 6px;
+  border-bottom: 1px solid #2a2d3a;
+}
+.settings-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid #1a1d27;
+  vertical-align: middle;
+}
+.settings-table tr:last-child td { border-bottom: none; }
+.settings-table td:first-child { color: #9ca3af; font-size: 12px; width: 30px; }
+.settings-table td:nth-child(2) { color: #d1d5db; font-size: 12px; width: 180px; }
+.settings-table td.s-ctrl-td { white-space: nowrap; }
+.settings-table td.s-desc-td { color: #4b5563; font-size: 11px; padding-left: 10px; font-style: italic; max-width: 280px; }
+.settings-sep td {
+  color: #4b5563 !important;
+  font-size: 11px !important;
+  padding: 6px 6px 2px !important;
+  border-bottom: 1px solid #2a2d3a !important;
+  letter-spacing: 0.5px;
+}
+.s-input {
+  background: #2a2d3a;
+  color: #e0e0e0;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  width: 80px;
+}
+.s-input:focus { outline: none; border-color: #3b82f6; }
+.s-check { cursor: pointer; width: 16px; height: 16px; accent-color: #3b82f6; }
+.s-select {
+  background: #2a2d3a;
+  color: #e0e0e0;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+.s-range { width: 100px; accent-color: #3b82f6; }
+.apply-btn {
+  background: #374151;
+  color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.apply-btn:hover { background: #4b5563; }
+
+/* Buttons panel */
+.btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.ctrl-btn {
+  background: #2a2d3a;
+  color: #e0e0e0;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 10px 6px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.12s, transform 0.08s;
+  user-select: none;
+}
+.ctrl-btn:hover { background: #374151; }
+.ctrl-btn:active { transform: scale(0.94); background: #3b82f6; }
+.dpad-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 6px; max-width: 160px; }
+.dpad-center { background: transparent !important; border: none !important; pointer-events: none; }
+
+/* Calibration */
+#calOutput {
+  width: 100%;
+  height: 80px;
+  background: #0f1117;
+  color: #22c55e;
+  border: 1px solid #2a2d3a;
+  border-radius: 4px;
+  padding: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  resize: vertical;
+  margin-top: 8px;
+}
+.cal-badge {
+  font-size: 11px; padding: 2px 10px; border-radius: 10px;
+  background: #1a1d27; color: #4b5563; border: 1px solid #2a2d3a;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+  white-space: nowrap;
+}
+.cal-badge.cal-active-a       { background: #2d2d2d; color: #d1d5db; border-color: #9ca3af; }
+.cal-badge.cal-active-b       { background: #0c2626; color: #22d3ee; border-color: #22d3ee; }
+.cal-badge.cal-done           { background: #1e2030; color: #6b7280; border-color: #374151; }
+.cal-badge.cal-active-success { background: #052e16; color: #22c55e; border-color: #22c55e; }
+.cal-badge.cal-active-fail    { background: #2d0b0b; color: #ef4444; border-color: #ef4444; }
+
+/* Mode-state variation section */
+.variation-group { display: none; }
+.variation-group.active { display: block; }
+
+.overlay-chip.sflp-active { background: #065f46; color: #34d399; }
+.overlay-chip.drop-active-chip { background: #7f1d1d; color: #fca5a5; }
+
+.section-title {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 10px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #2a2d3a;
+}
+</style>
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<!-- ── Connect bar + Raw Command ────────────────────────────────────────────── -->
+<div class="section">
+  <div class="row">
+    <h2>GlowBone Dashboard</h2>
+    <button id="connectBtn" onclick="connect()">Connect</button>
+    <span id="status"><span id="statusDot"></span>Disconnected</span>
+    <span id="mtuInfo" style="color:#6b7280;font-size:12px;"></span>
+    <span style="flex:1;"></span>
+    <input id="rawCmdInput" type="text" class="s-input" style="width:200px;font-family:monospace;" placeholder="e.g. $S 9 5">
+    <button class="apply-btn" style="padding:4px 12px;" onclick="sendCmd()">Send</button>
+  </div>
+</div>
+
+<!-- ── Effect Cycle Visualizer ────────────────────────────────────────────── -->
+<div class="section" style="padding:10px 14px;">
+  <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Effect Cycle — click to jump</div>
+  <div id="cyclePills" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
+</div>
+
+<!-- ── State + Controls (combined) ───────────────────────────────────────────── -->
+<div class="section">
+  <h3>State &amp; Controls</h3>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+
+    <!-- Live state + action buttons -->
+    <div style="flex:1;min-width:200px;">
+      <div class="mode-row" style="margin-bottom:8px;">
+        <div class="mode-badge" id="modeBadge">—</div>
+        <div class="bri-bar-bg"><div class="bri-bar-fill" id="briBadge"></div></div>
+        <span class="bri-val" id="briVal">—</span>
+      </div>
+      <div id="modeVariation" style="font-size:11px;color:#9ca3af;margin-bottom:6px;min-height:14px;"></div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Effect</div>
+        <select id="modeSelect" class="s-select" style="width:100%;max-width:220px;font-size:13px;padding:5px 8px;" onchange="writeSetting(200,parseInt(this.value))">
+        </select>
+      </div>
+      <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Buttons</div>
+      <div class="btn-grid" style="max-width:220px;">
+        <div class="ctrl-btn" onclick="sendButton('1')">1<br><span style="font-size:10px;color:#9ca3af;">Next Effect</span></div>
+        <div class="ctrl-btn" onclick="sendButton('2')">2<br><span style="font-size:10px;color:#9ca3af;">Sparkle</span></div>
+        <div class="ctrl-btn" onclick="sendButton('3')" style="opacity:0.4;">3<br><span style="font-size:10px;color:#9ca3af;">—</span></div>
+        <div class="ctrl-btn" onclick="sendButton('4')" style="opacity:0.4;">4<br><span style="font-size:10px;color:#9ca3af;">—</span></div>
+      </div>
+    </div>
+
+    <!-- D-pad -->
+    <div>
+      <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">D-Pad</div>
+      <div style="font-size:11px;color:#4b5563;margin-bottom:6px;">▲▼ Brightness &nbsp;·&nbsp; ◄► Effect variation</div>
+      <div class="dpad-grid">
+        <div></div>
+        <div class="ctrl-btn" onclick="sendButton('5')">▲<br><span style="font-size:10px;color:#9ca3af;">Bri+</span></div>
+        <div></div>
+        <div class="ctrl-btn" onclick="sendButton('7')">◄<br><span style="font-size:10px;color:#9ca3af;">Prev</span></div>
+        <div class="dpad-center"></div>
+        <div class="ctrl-btn" onclick="sendButton('8')">►<br><span style="font-size:10px;color:#9ca3af;">Next</span></div>
+        <div></div>
+        <div class="ctrl-btn" onclick="sendButton('6')">▼<br><span style="font-size:10px;color:#9ca3af;">Bri−</span></div>
+        <div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Audio + Motion (combined, side by side) ───────────────────────────── -->
+<div class="section">
+  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+
+    <!-- LEFT col: Audio bars + beat chips -->
+    <div style="flex:1;min-width:160px;max-width:240px;">
+      <h3 style="margin-bottom:6px;">Audio</h3>
+      <div class="bar-row">
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill bass" id="barBass"></div></div>
+          <span class="bar-label">Bass</span>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill mid" id="barMid"></div></div>
+          <span class="bar-label">Mid</span>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill treble" id="barTreble"></div></div>
+          <span class="bar-label">Treble</span>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill energy" id="barEnergy"></div></div>
+          <span class="bar-label">Energy</span>
+        </div>
+      </div>
+      <div class="beat-row" style="margin-top:6px;">
+        <div class="beat-chip" id="beatChip">BEAT</div>
+        <div class="beat-chip" id="dropChip">DROP</div>
+      </div>
+    </div>
+
+    <!-- RIGHT col: Motion IMU grid + tilt/spin/idle + overlays -->
+    <div style="flex:2;min-width:280px;">
+      <h3 style="margin-bottom:6px;">Motion</h3>
+      <div class="imu-grid">
+        <div class="imu-cell"><div class="imu-label">Accel X</div><div class="imu-val" id="imuAX">—</div></div>
+        <div class="imu-cell"><div class="imu-label">Accel Y</div><div class="imu-val" id="imuAY">—</div></div>
+        <div class="imu-cell"><div class="imu-label">Accel Z</div><div class="imu-val" id="imuAZ">—</div></div>
+        <div class="imu-cell"><div class="imu-label">Gyro X</div><div class="imu-val" id="imuGX">—</div></div>
+        <div class="imu-cell"><div class="imu-label">Gyro Y</div><div class="imu-val" id="imuGY">—</div></div>
+        <div class="imu-cell"><div class="imu-label">Gyro Z</div><div class="imu-val" id="imuGZ">—</div></div>
+      </div>
+      <div class="imu-row" style="margin-top:6px;">
+        <div class="imu-wide">
+          <div class="imu-label">Pitch</div>
+          <div class="imu-val" id="imuPitch">—</div>
+        </div>
+        <div class="imu-wide">
+          <div class="imu-label">Roll</div>
+          <div class="imu-val" id="imuRoll">—</div>
+        </div>
+      </div>
+      <div class="imu-row" style="margin-top:6px;">
+        <div class="imu-wide">
+          <div class="imu-label">Tilt</div>
+          <div class="imu-val" id="imuTilt">—</div>
+          <div class="tilt-bar-bg"><div class="tilt-bar-fill" id="tiltBar"></div></div>
+        </div>
+        <div class="imu-wide">
+          <div class="imu-label">Spin</div>
+          <div class="imu-val spin-slow" id="imuSpin">—</div>
+          <div style="font-size:10px;color:#4b5563;margin-top:3px;" id="spinLabel">—</div>
+        </div>
+        <div class="imu-wide" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+          <span class="idle-badge" id="idleBadge">Active</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+            <span class="tap-pill" id="tapAxialPlus">Axial+</span>
+            <span class="tap-pill" id="tapAxialMinus">Axial−</span>
+            <span class="tap-pill" id="tapLateral">Lateral</span>
+            <span class="tap-pill" id="tapUnknown">Unknown</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
+        <span style="font-size:11px;color:#6b7280;">Overlays:</span>
+        <span class="overlay-chip" id="overlaySparkle">Sparkle</span>
+        <span class="overlay-chip" id="overlayBurst">Tap Burst</span>
+        <span class="overlay-chip" id="overlayIdleDim">Idle Dim</span>
+        <span class="overlay-chip" id="overlayDrop">Drop!</span>
+        <span class="overlay-chip" id="sflpStatus">SFLP</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Logs row: Audio Log | Motion Log side by side -->
+  <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
+
+    <div style="flex:1;min-width:200px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;">Audio Log</span>
+        <button class="apply-btn" onclick="clearAudioLog()">Clear</button>
+        <button class="apply-btn" onclick="copyAudioLog()">Copy</button>
+        <button class="apply-btn" id="audioScrollBtn" onclick="toggleAudioScroll()">Auto-scroll ✓</button>
+      </div>
+      <div id="audioLog"></div>
+    </div>
+
+    <div style="flex:1;min-width:200px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;">Motion Log</span>
+        <button class="apply-btn" onclick="clearMotionLog()">Clear</button>
+        <button class="apply-btn" onclick="copyMotionLog()">Copy</button>
+        <button class="apply-btn" id="motionScrollBtn" onclick="toggleMotionScroll()">Auto-scroll ✓</button>
+      </div>
+      <div id="motionLog"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Settings panel ─────────────────────────────────────────────────────── -->
+<div class="section">
+  <h3>Settings</h3>
+  <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+
+    <!-- LEFT: Tunables -->
+    <div style="flex:2;min-width:320px;">
+      <div class="section-title">Tunables (ids 1–13, 100–116, 119–136)</div>
+      <table class="settings-table">
+        <thead><tr><th>ID</th><th>Name</th><th>Value</th><th style="color:#4b5563;font-style:italic;">Description</th></tr></thead>
+        <tbody id="tunablesBody"></tbody>
+      </table>
+    </div>
+
+    <!-- RIGHT: Mode State -->
+    <div style="flex:1;min-width:260px;">
+      <div class="section-title">Mode State (ids 200–210)</div>
+      <table class="settings-table">
+        <thead><tr><th>ID</th><th>Name</th><th>Value</th><th style="color:#4b5563;font-style:italic;">Description</th></tr></thead>
+        <tbody id="modeStateBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Calibration ─────────────────────────────────────────────────────────── -->
+<div class="section">
+  <details>
+  <summary style="cursor:pointer;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;user-select:none;padding:2px 0;">IMU Calibration</summary>
+  <div style="color:#9ca3af;font-size:12px;line-height:1.65;margin-bottom:12px;">
+    <p style="margin-bottom:8px;">Calibration identifies the staff's <strong style="color:#e0e0e0;">long axis</strong> — which direction in IMU space runs from base to tip.
+    This is required for <strong style="color:#e0e0e0;">Mode 10 (Bone Balance)</strong> and <strong style="color:#e0e0e0;">Mode 11 (Spin-Responsive Hue)</strong> to respond correctly to tilt and spin.
+    With the IMU mounted at the bottom (readable left-to-right when the bone stands upright), the expected long axis after a successful calibration is <strong style="color:#e0e0e0;">Y+ (axis id 2)</strong>.</p>
+    <p style="margin-bottom:6px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Steps</p>
+    <ol style="margin:0 0 8px 18px;display:flex;flex-direction:column;gap:5px;">
+      <li><strong style="color:#e0e0e0;">Press "Run IMU Cal"</strong> below. The firmware queues the routine — it starts at the next loop().</li>
+      <li><strong style="color:#e0e0e0;">Phase A — Hold still (≈3 s):</strong> Hold the staff vertical (tip up or tip down) and completely motionless. The LEDs pulse white during the 3-second hold — keep the bone still until you see a blue sweep. The firmware checks that one axis reads ≥0.7 g — it will red-flash and abort if you move during this phase.</li>
+      <li><strong style="color:#e0e0e0;">Phase B — Spin verify (≈2 s):</strong> When you see the cyan strobe begin, slowly spin the bone along its long axis (like twirling a baton). The firmware confirms that gyro rotation is dominant on the detected axis. If spin is too weak (&lt;30°/s) it red-flashes and aborts.</li>
+      <li><strong style="color:#e0e0e0;">Result:</strong> <span style="color:#22c55e;">Green flash</span> = success — settings 11 (imu_long_axis) and 13 (imu_calibrated) written to NVS. <span style="color:#ef4444;">Red flash</span> = threshold not met — press Run again and retry.</li>
+    </ol>
+    <p style="margin-bottom:6px;">After a successful calibration you can verify with <strong style="color:#e0e0e0;">Diagnostic D4</strong>: press Button 4 and cycle sub-modes until D4 (Direction Palette). Each of the 6 axis directions shows a distinct color. Point the tip toward the floor — it should show the color assigned to the detected axis. Use ◄► to manually step the axis override if needed.</p>
+    <p style="color:#6b7280;font-size:11px;">Note: With the IMU mounted at the bottom (readable left-to-right when the bone stands up), the expected long axis after successful calibration is <strong style="color:#9ca3af;">Y+ (axis id 2)</strong>. The Direction Palette D4 sub-mode will show cyan/teal pointing up if calibration succeeded.</p>
+  </div>
+  <div class="row" style="margin-bottom:8px;">
+    <button class="apply-btn" style="padding:6px 16px;font-size:13px;" onclick="runImuCal()">Run IMU Cal</button>
+    <span style="color:#6b7280;font-size:12px;">Sends <code style="background:#2a2d3a;padding:1px 5px;border-radius:3px;font-size:11px;">$S 13 0</code></span>
+  </div>
+  <div id="calPhases" style="display:flex;gap:8px;margin:4px 0 6px;">
+    <span id="calPhaseA" class="cal-badge">&#9679; Phase A — Hold still</span>
+    <span id="calPhaseB" class="cal-badge">&#9679; Phase B — Spin now</span>
+    <span id="calPhaseResult" class="cal-badge">&#9679; Result</span>
+  </div>
+  <textarea id="calOutput" readonly placeholder="Firmware calibration output appears here..."></textarea>
+  </details>
+</div>
+
+<!-- ── Diagnostics ─────────────────────────────────────────────────────────── -->
+<div class="section" style="background:#1a0d0d;border-color:#4a1a1a;">
+  <details>
+  <summary style="cursor:pointer;font-size:11px;color:#ef4444;text-transform:uppercase;letter-spacing:1px;user-select:none;padding:2px 0;">🔧 Diagnostics</summary>
+  <div style="margin-top:10px;">
+    <p style="font-size:11px;color:#6b7280;font-style:italic;margin-bottom:10px;">For hardware debugging only — not for performance use</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="apply-btn" style="background:#2d1515;color:#fca5a5;border:1px solid #7f1d1d;" onclick="writeDiag(0)">Rainbow</button>
+      <button class="apply-btn" style="background:#2d1515;color:#fca5a5;border:1px solid #7f1d1d;" onclick="writeDiag(1)">Tracer</button>
+      <button class="apply-btn" style="background:#2d1515;color:#fca5a5;border:1px solid #7f1d1d;" onclick="writeDiag(2)">Sections</button>
+      <button class="apply-btn" style="background:#2d1515;color:#fca5a5;border:1px solid #7f1d1d;" onclick="writeDiag(3)">Alternating</button>
+      <button class="apply-btn" style="background:#2d1515;color:#fca5a5;border:1px solid #7f1d1d;" onclick="writeDiag(4)">Direction Palette</button>
+      <button class="apply-btn" style="background:#1a0a0a;color:#9ca3af;border:1px solid #374151;" onclick="writeDiag(-1)">Exit</button>
+    </div>
+  </div>
+  </details>
+</div>
+
+<script>
+// ── BLE UUIDs ────────────────────────────────────────────────────────────────
+const UART_SVC = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const TX_CHAR  = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const RX_CHAR  = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+
+// ── State ────────────────────────────────────────────────────────────────────
+let gDevice, gServer, gTxChar, gRxChar;
+let lineBuffer = '';
+let gSettingsValues = {};  // id (number) → value (number)
+let gConnectTime = null;
+let gImpWavePrevMode = 0;  // mode to restore when impact_wave_type returns to Off
+let gLastAudioLog  = 0;
+let gLastMotionLog = 0;
+let gAudioAutoScroll  = true;
+let gMotionAutoScroll = true;
+let gIdleStartMs      = 0;
+let gPrevIsIdle       = -1;   // -1 = uninitialized
+let gPrevOverlayFlags = -1;   // -1 = uninitialized
+
+// ── Mode metadata ─────────────────────────────────────────────────────────────
+// Change 3 + 7: mode 10 = Bone Balance, mode 12 = Idle Dim
+const MODE_NAMES = [
+  'Wave', 'Animartrix', 'Noise', 'Helix Tracer', 'Ember Rain',
+  'Pulse Rings', 'Deep Aurora', 'Pacifica', 'Breathe', 'Meteor Shower',
+  'Bone Balance', 'Spin Hue', 'Idle Dim',
+  'Gyro Spin Trails', 'Tilt Thermo', 'Space Lock', 'Liquid Light',
+  'Impact Wave', 'Impact Wave Lateral', 'Impact Wave Axial',
+];
+
+// Change 4: modes in BLE Button 1 cycle
+const CYCLE_MODES = [0, 1, 2, 3, 4, 5, 7, 10, 11, 14, 15, 16, 18, 19];
+
+// Modes not in BLE cycle
+const SKIPPED_MODES = new Set([6, 8, 9, 12, 13, 17]);
+
+// Left/Right variation label names per mode
+const MODE_VARIATION_NAMES = {
+  14: ['Rainbow', 'Fire', 'Ocean'],
+  15: ['Rainbow', 'Comet', 'Stripe'],
+  16: ['Cyan/Teal', 'Lava', 'Acid Green'],
+};
+
+// ── Settings metadata (mirrors firmware registry) ─────────────────────────────
+// Change 6: grouped with separators, ids 105-107 labeled skipped, ids 108-110 added
+const TUNABLES = [
+  { id: null, name: '── Motion / Idle ──', type: 'separator' },
+  { id: 1,  name: 'idle_delay_sec',      type: 'int',     min: 3,   max: 1800, step: 1,  desc: 'Seconds of stillness before idle mode starts' },
+  { id: 2,  name: 'idle_brightness',     type: 'percent', min: 5,   max: 100,  step: 5,  desc: 'LED brightness % during idle dim stage' },
+  { id: 10, name: 'idle_enabled',        type: 'bool',                                   desc: 'Enable auto-idle after inactivity timeout' },
+  { id: 108, name: 'idle_stage1_sec',    type: 'int',     min: 10,  max: 1800, step: 5,  desc: 'Duration of Stage 1 dimming phase (seconds)' },
+  { id: 109, name: 'idle_stage2_sec',    type: 'int',     min: 10,  max: 1800, step: 5,  desc: 'Duration of Stage 2 end-glow phase (seconds)' },
+  { id: 110, name: 'idle_stage3_sec',    type: 'int',     min: 10,  max: 1800, step: 5,  desc: 'Duration of Stage 3 sleep phase (seconds)' },
+  { id: 141, name: 'transition_ms',     type: 'int',     min: 100, max: 2000, step: 50, desc: 'Mode crossfade duration in milliseconds (100=snap, 2000=slow fade)' },
+
+  { id: null, name: '── Audio ──', type: 'separator' },
+  { id: 121, name: 'audio_preset',         type: 'select', options: ['Home', 'Bar', 'Festival'],
+    desc: 'Audio environment preset (Home=quiet/testing, Bar=moderate, Festival=loud bass). mic_gain and signal_conditioning changes require reboot to take effect.' },
+  { id: 5,  name: 'beat_sensitivity',    type: 'percent', min: 1,   max: 100,  step: 1,  desc: 'Beat detection threshold — lower = more sensitive' },
+  { id: 6,   name: 'mic_gain',              type: 'percent', min: 1,   max: 100,  step: 1,  desc: 'Microphone gain level (reboot required for change to take effect)' },
+  { id: 120, name: 'signal_conditioning',  type: 'bool',                                   desc: 'Enable FastLED signal conditioning / noise gate (takes effect on reboot)' },
+  { id: 7,  name: 'max_brightness',      type: 'int',     min: 10,  max: 255,  step: 5,  desc: 'Global LED brightness ceiling (0–255)' },
+  { id: 8,  name: 'plotter_legacy',      type: 'bool',                                   desc: 'Use legacy Serial Plotter output format' },
+  { id: 9,  name: 'telemetry_rate',      type: 'int',     min: 1,   max: 30,   step: 1,  desc: 'BLE telemetry frames per second' },
+
+  { id: null, name: '── IMU / Tap ──', type: 'separator' },
+  { id: 3,  name: 'tap_threshold_mg',    type: 'int',     min: 500, max: 4000, step: 100, desc: 'Tap detection threshold in milli-g' },
+  { id: 4,  name: 'tap_holdoff_ms',      type: 'int',     min: 50,  max: 5000, step: 10,  desc: 'Min ms between consecutive tap events' },
+  { id: 11, name: 'imu_long_axis',       type: 'select',  options: ['0 X+','1 X−','2 Y+','3 Y−','4 Z+','5 Z−'], desc: 'Staff long axis detected by calibration' },
+  { id: 12, name: 'tap_overlay_enabled', type: 'bool',                                   desc: 'Show tap-burst color overlay on tap event' },
+  { id: 13, name: 'imu_calibrated',      type: 'bool',                                   desc: 'Set by firmware after successful IMU calibration' },
+  { id: 100, name: 'auto_cal_enabled',        type: 'bool',                              desc: 'Re-run axis calibration automatically on boot' },
+  { id: 103, name: 'tap_burst_duration_ms',    type: 'int',     min: 200, max: 30000, step: 50,  desc: 'How long the tap-burst overlay stays visible (ms)' },
+  { id: 104, name: 'tap_burst_color',          type: 'select',  options: ['Blue-White','Amber','Green','White'], desc: 'Color scheme for axial tap burst overlay' },
+  { id: 111, name: 'tap_lateral_duration_ms',  type: 'int',     min: 200, max: 30000, step: 50,  desc: 'Duration of lateral tap overlay (ms)' },
+  { id: 112, name: 'tap_sweep_pct',            type: 'int',     min: 10,  max: 100,  step: 5,   desc: 'Tap sweep coverage — % of staff length' },
+
+  { id: null, name: '── Tap Sparks ──', type: 'separator' },
+  { id: 137, name: 'Spark Density',  type: 'int', min: 1,  max: 15,  step: 1,  desc: 'Seeding probability at crest peak (value÷100); lower = fewer sparks' },
+  { id: 138, name: 'Twinkle Rate',   type: 'int', min: 1,  max: 10,  step: 1,  desc: 'Re-flash probability per frame (value÷1000); lower = slower twinkling' },
+  { id: 139, name: 'Brightness',     type: 'int', min: 50, max: 255, step: 5,  desc: 'Peak spark brightness cap (0–255)' },
+  { id: 140, name: 'Decay Speed',    type: 'int', min: 5,  max: 50,  step: 1,  desc: 'Spark fade rate between flashes (value÷10); higher = faster decay' },
+
+  { id: null, name: '── Mode Variations ──', type: 'separator' },
+  { id: 101, name: 'gravity_palette',         type: 'select',  options: ['Blue','Red','Green','Rainbow'], desc: 'Color palette for Bone Balance (mode 10)' },
+  { id: 102, name: 'spin_hue_rate',           type: 'int',     min: 1,   max: 500,  step: 1,   desc: 'Hue rotation speed for Spin Hue (mode 11)' },
+  { id: 105, name: 'spin_trail_min (mode 13 — skipped)',   type: 'int', min: 1,  max: 60,  step: 1,  desc: 'Min trail length for Gyro Spin Trails (skipped)' },
+  { id: 106, name: 'spin_trail_max (mode 13 — skipped)',   type: 'int', min: 5,  max: 150, step: 1,  desc: 'Max trail length for Gyro Spin Trails (skipped)' },
+  { id: 107, name: 'spin_trail_decay (mode 13 — skipped)', type: 'int', min: 1,  max: 99, step: 1,  desc: 'Trail fade rate for Gyro Spin Trails (skipped)' },
+
+  { id: null, name: '── Liquid Light (mode 16) ──', type: 'separator' },
+  { id: 113, name: 'liquid_spring_k',   type: 'int', min: 1,  max: 20, step: 1,
+    desc: 'Gravity strength (÷10). Start ~15. Too low = zero-G; too high = snaps instantly' },
+  { id: 114, name: 'liquid_damping',    type: 'int', min: 50, max: 99, step: 1,
+    desc: 'Damping per frame (÷100). Higher = less sloshing, settles faster' },
+  { id: 115, name: 'liquid_beat_kick',  type: 'int', min: 0,  max: 20, step: 1,
+    desc: 'Beat impulse strength (÷10). Higher = more violent jolt on kick' },
+  { id: 116, name: 'liquid_fill_pct',   type: 'int', min: 5,  max: 95, step: 5,
+    desc: 'Fluid fill level % (5–95). Change takes effect immediately' },
+
+  { id: null, name: '── Test / Debug ──', type: 'separator' },
+  { id: 122, name: 'impact_wave_type', type: 'select', options: ['Off', 'Base', 'Tip', 'Center'],
+    desc: 'Impact Wave test (mode 17 — skipped in cycle). Select origin; wave loops continuously while non-zero.' },
+
+  { id: null, name: '── Impact Wave Lateral (mode 18) ──', type: 'separator' },
+  { id: 123, name: 'IWL Speed',     type: 'int', min: 1,  max: 10, step: 1,
+    desc: 'Wave expansion speed (1=slow, 10=fast)' },
+  { id: 124, name: 'IWL Sparks',    type: 'int', min: 0,  max: 10, step: 1,
+    desc: 'Trailing white spark density (0=off, 10=heavy)' },
+  { id: 125, name: 'IWL Sharpness',    type: 'int', min: 1,  max:  5, step: 1,
+    desc: 'Wave edge sharpness — power applied to brightness curve (1=soft, 5=crisp)' },
+  { id: 126, name: 'IWL Radial Boost', type: 'int', min: 0,  max: 40, step: 1,
+    desc: 'Angular column radius boost (÷100). Higher = more 3D barrel shape to the wave' },
+  { id: 127, name: 'IWL Color Drift',  type: 'int', min: 1,  max: 10, step: 1,
+    desc: 'Hue rotation speed (1=slow drift, 10=fast cycling)' },
+  { id: 128, name: 'IWL Wave Scale',   type: 'int', min: 1,  max: 10, step: 1,
+    desc: 'Radial scale of the wave pattern (1=wide bands, 10=tight rings)' },
+  { id: 129, name: 'IWL Spark Decay',  type: 'int', min: 1,  max: 10, step: 1,
+    desc: 'Spark persistence decay (1=long ember linger, 10=instant — matches original behavior)' },
+
+  { id: null, name: '── Impact Wave Axial (mode 19) ──', type: 'separator' },
+  { id: 130, name: 'Wave Speed',    type: 'int', min: 1,  max: 20, step: 1,
+    desc: 'Wave expansion speed (1=slow ~6s/cycle, 20=fast ~0.6s/cycle)' },
+  { id: 131, name: 'Spark Amount',  type: 'int', min: 0,  max: 10, step: 1,
+    desc: 'Trailing white spark density (0=off, 10=heavy)' },
+  { id: 132, name: 'Sharpness',     type: 'int', min: 1,  max:  5, step: 1,
+    desc: 'Wave edge sharpness — power applied to brightness curve (1=soft, 5=crisp)' },
+  { id: 133, name: 'Radial Boost',  type: 'int', min: 0,  max: 40, step: 1,
+    desc: 'Angular column radius boost (÷100). Higher = more 3D barrel shape to the wave' },
+  { id: 134, name: 'Color Drift',   type: 'int', min: 1,  max: 10, step: 1,
+    desc: 'Hue rotation speed (1=slow drift, 10=fast cycling)' },
+  { id: 135, name: 'Wave Scale',    type: 'int', min: 1,  max: 20, step: 1,
+    desc: 'Radial scale of the wave pattern (1=wide bands, 20=tight rings)' },
+  { id: 136, name: 'Spark Decay',   type: 'int', min: 1,  max: 10, step: 1,
+    desc: 'Spark persistence decay (1=long ember linger, 10=instant)' },
+
+];
+
+const ANIMARTRIX_NAMES = [
+  '0 - RGB Blobs 5', '1 - RGB Blobs 4', '2 - RGB Blobs 3', '3 - RGB Blobs 2',
+  '4 - RGB Blobs', '5 - Polar Waves', '6 - Slow Fade', '7 - Zoom 2',
+  '8 - Zoom', '9 - Hot Blob', '10 - Spiralus 2', '11 - Spiralus',
+  '12 - Yves', '13 - Scale Demo', '14 - Lava', '15 - Caleido 3',
+  '16 - Caleido 2', '17 - Caleido 1', '18 - Distance Exp', '19 - Center Field',
+  '20 - Waves', '21 - Chasing Spirals', '22 - Rotating Blob', '23 - Rings',
+  '24 - Complex Kaleido', '25 - Complex Kaleido 2', '26 - Complex Kaleido 3',
+  '27 - Complex Kaleido 4', '28 - Complex Kaleido 5', '29 - Complex Kaleido 6',
+  '30 - Water', '31 - Parametric Water', '32 - Module Exp 1', '33 - Module Exp 2',
+  '34 - Module Exp 3', '35 - Module Exp 4', '36 - Module Exp 5', '37 - Module Exp 6',
+  '38 - Module Exp 7', '39 - Module Exp 8', '40 - Module Exp 9', '41 - Module Exp 10',
+  '42 - Module SM 1', '43 - Module SM 2', '44 - Module SM 3', '45 - Module SM 4',
+  '46 - Module SM 5', '47 - Module SM 6', '48 - Module SM 8', '49 - Module SM 9',
+  '50 - Module SM 10', '51 - Fluffy Blobs'
+];
+
+const WAVE_PAL_NAMES    = ['Blue','Red','Green','Rainbow'];
+const NOISE_PAL_NAMES   = ['Party','Heat','Ocean','Forest','Rainbow'];
+const TRACER_NAMES      = ['Rainbow','Fire','Ice','Mono'];
+const EMBER_NAMES       = ['Hot Orange','Mixed','Cool Blue'];
+const RING_PAL_NAMES    = ['Fire','Ocean','Rainbow','Purple'];
+const AURORA_NAMES      = ['Purple-Blue','Teal-Green','Pink-Magenta'];
+const PACIFICA_NAMES    = ['Blue-Cyan','Purple-Pink','Teal-Green'];
+const METEOR_NAMES      = ['Rings Only','Mixed','Tracer Heavy'];
+
+const MODE_STATE = [
+  { id: 200, name: 'mode',           type: 'mode_select',                                                    desc: 'Active effect slot' },
+  { id: 201, name: 'brightness',     type: 'int',     min: 10,  max: 255,  step: 5,   desc: 'Current brightness (0–255)' },
+  { id: 202, name: 'noise_palette',  type: 'select',  options: NOISE_PAL_NAMES,        desc: 'Color palette for Noise (mode 2)' },
+  { id: 203, name: 'wave_palette',   type: 'select',  options: WAVE_PAL_NAMES,         desc: 'Color palette for Wave (mode 0)' },
+  { id: 204, name: 'tracer_color',   type: 'select',  options: TRACER_NAMES,           desc: 'Color for Helix Tracer (mode 3)' },
+  { id: 205, name: 'ember_color',    type: 'select',  options: EMBER_NAMES,            desc: 'Color for Ember Rain (mode 4)' },
+  { id: 206, name: 'ring_palette',   type: 'select',  options: RING_PAL_NAMES,         desc: 'Palette for Pulse Rings (mode 5)' },
+  { id: 207, name: 'aurora_family',  type: 'select',  options: AURORA_NAMES,           desc: 'Color family for Deep Aurora (mode 6)' },
+  { id: 208, name: 'pacifica_pair',  type: 'select',  options: PACIFICA_NAMES,         desc: 'Color pair for Pacifica (mode 7)' },
+  { id: 209, name: 'meteor_trail',   type: 'select',  options: METEOR_NAMES,           desc: 'Trail style for Meteor Shower (mode 9)' },
+  { id: 210, name: 'animartrix_idx', type: 'select',  options: ANIMARTRIX_NAMES,
+    desc: 'Animartrix animation (0=RGB Blobs 5 … 51=Fluffy Blobs)' },
+];
+
+// ── Build settings tables on load ─────────────────────────────────────────────
+function buildSettingRow(s, tbody) {
+  // Separator row
+  if (s.type === 'separator') {
+    const tr = document.createElement('tr');
+    tr.className = 'settings-sep';
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.textContent = s.name;
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  const tr = document.createElement('tr');
+  tr.dataset.id = s.id;
+  const tdId   = document.createElement('td'); tdId.textContent = s.id;
+  const tdName = document.createElement('td'); tdName.textContent = s.name;
+  const tdCtrl = document.createElement('td'); tdCtrl.className = 's-ctrl-td';
+  const tdDesc = document.createElement('td'); tdDesc.className = 's-desc-td'; tdDesc.textContent = s.desc || '';
+
+  let ctrl;
+  if (s.type === 'bool') {
+    ctrl = document.createElement('input');
+    ctrl.type = 'checkbox';
+    ctrl.className = 's-check';
+    ctrl.addEventListener('change', () => writeSetting(s.id, ctrl.checked ? 1 : 0));
+    tdCtrl.appendChild(ctrl);
+  } else if (s.type === 'select') {
+    ctrl = document.createElement('select');
+    ctrl.className = 's-select';
+    s.options.forEach((opt, i) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = opt;
+      ctrl.appendChild(o);
+    });
+    ctrl.addEventListener('change', () => {
+      const v = parseInt(ctrl.value);
+      writeSetting(s.id, v);
+      if (s.id === 122) handleImpactWaveTypeChange(v);
+    });
+    tdCtrl.appendChild(ctrl);
+  } else if (s.type === 'mode_select') {
+    ctrl = document.createElement('select');
+    ctrl.className = 's-select';
+    MODE_NAMES.forEach((name, i) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = i + ' ' + name + (SKIPPED_MODES.has(i) ? ' (skipped)' : '');
+      if (SKIPPED_MODES.has(i)) { o.dataset.skipped = '1'; o.style.color = '#4b5563'; o.style.fontStyle = 'italic'; }
+      ctrl.appendChild(o);
+    });
+    ctrl.addEventListener('change', () => writeSetting(s.id, parseInt(ctrl.value)));
+    tdCtrl.appendChild(ctrl);
+  } else {
+    // int / percent — number input with Set button inline in same cell
+    ctrl = document.createElement('input');
+    ctrl.type = 'number';
+    ctrl.className = 's-input';
+    ctrl.min = s.min; ctrl.max = s.max; ctrl.step = s.step || 1;
+    const btn = document.createElement('button');
+    btn.className = 'apply-btn';
+    btn.textContent = 'Set';
+    btn.style.marginLeft = '4px';
+    btn.addEventListener('click', () => writeSetting(s.id, parseInt(ctrl.value)));
+    ctrl.addEventListener('keydown', e => { if (e.key === 'Enter') writeSetting(s.id, parseInt(ctrl.value)); });
+    tdCtrl.appendChild(ctrl);
+    tdCtrl.appendChild(btn);
+  }
+  ctrl.dataset.settingId = s.id;
+
+  tr.appendChild(tdId);
+  tr.appendChild(tdName);
+  tr.appendChild(tdCtrl);
+  tr.appendChild(tdDesc);
+  tbody.appendChild(tr);
+}
+
+function buildSettingsTables() {
+  const tb = document.getElementById('tunablesBody');
+  const ms = document.getElementById('modeStateBody');
+  TUNABLES.forEach(s  => buildSettingRow(s,  tb));
+  MODE_STATE.forEach(s => buildSettingRow(s, ms));
+}
+
+// ── Settings UI update ────────────────────────────────────────────────────────
+function updateSettingUI(id, val) {
+  gSettingsValues[id] = val;
+  const ctrl = document.querySelector(`[data-setting-id="${id}"]`);
+  if (!ctrl) return;
+  if (ctrl.type === 'checkbox') {
+    ctrl.checked = (val !== 0);
+  } else if (ctrl.tagName === 'SELECT' || ctrl.tagName === 'select') {
+    ctrl.value = val;
+  } else {
+    ctrl.value = val;
+  }
+}
+
+// ── BLE Connect ───────────────────────────────────────────────────────────────
+async function connect() {
+  if (!navigator.bluetooth) {
+    setStatus('Web Bluetooth not available. Use Chrome over HTTPS or file://');
+    return;
+  }
+  document.getElementById('connectBtn').disabled = true;
+  try {
+    gDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [UART_SVC] }]
+    });
+    gDevice.addEventListener('gattserverdisconnected', onDisconnected);
+    gServer = await gDevice.gatt.connect();
+    const service = await gServer.getPrimaryService(UART_SVC);
+    gTxChar = await service.getCharacteristic(TX_CHAR);
+    gRxChar = await service.getCharacteristic(RX_CHAR);
+    await gTxChar.startNotifications();
+    gTxChar.addEventListener('characteristicvaluechanged', onNotify);
+    gConnectTime = Date.now();
+    setStatus('Connected', true);
+    document.getElementById('connectBtn').textContent = 'Disconnect';
+    document.getElementById('connectBtn').onclick = disconnect;
+    document.getElementById('connectBtn').disabled = false;
+    // Switch to dashboard (prefixed) mode
+    writeRaw('$S 8 0\n');
+  } catch (e) {
+    setStatus('Connect failed: ' + e.message);
+    document.getElementById('connectBtn').disabled = false;
+  }
+}
+
+async function disconnect() {
+  if (gDevice && gDevice.gatt.connected) {
+    await gDevice.gatt.disconnect();
+  }
+}
+
+function onDisconnected() {
+  setStatus('Disconnected');
+  document.getElementById('connectBtn').textContent = 'Connect';
+  document.getElementById('connectBtn').onclick = connect;
+  document.getElementById('connectBtn').disabled = false;
+  document.getElementById('statusDot').className = '';
+  document.getElementById('mtuInfo').textContent = '';
+}
+
+function setStatus(msg, connected) {
+  document.getElementById('status').innerHTML =
+    `<span id="statusDot"${connected ? ' class="connected"' : ''}></span>${msg}`;
+}
+
+// ── Line reassembly ───────────────────────────────────────────────────────────
+// TX notifications may fragment if MTU < line length. Buffer on '\n'.
+function onNotify(event) {
+  lineBuffer += new TextDecoder().decode(event.target.value);
+  const lines = lineBuffer.split('\n');
+  lineBuffer = lines.pop();  // incomplete tail back to buffer
+  lines.forEach(line => { if (line.length > 0) parseLine(line); });
+}
+
+// ── Line parser ───────────────────────────────────────────────────────────────
+function parseLine(line) {
+  if (line.startsWith('T,'))          parseTelemetry(line.slice(2));
+  else if (line.startsWith('A,'))     parseAudio(line.slice(2));
+  else if (line.startsWith('S,cal,')) parseCalMessage(line);
+  else if (line.startsWith('S,'))     parseSetting(line.slice(2));
+  // Legacy lines (no prefix) — silently ignore
+}
+
+// ── Calibration message handler (S,cal,... lines) ────────────────────────────
+function parseCalMessage(line) {
+  appendCalOutput(line);
+  const msg = line.slice(6).toLowerCase();  // after 'S,cal,'
+  if (msg.startsWith('hold')) {
+    setCalPhase('A');
+  } else if (msg.startsWith('phase a done')) {
+    setCalPhase('B');
+  } else if (msg.includes('failed')) {
+    setCalPhase('fail');
+  }
+}
+
+// ── Calibration phase indicator ───────────────────────────────────────────────
+function setCalPhase(phase) {
+  const a = document.getElementById('calPhaseA');
+  const b = document.getElementById('calPhaseB');
+  const r = document.getElementById('calPhaseResult');
+  if (!a || !b || !r) return;
+  [a, b, r].forEach(el => el.classList.remove(
+    'cal-active-a', 'cal-active-b', 'cal-done', 'cal-active-success', 'cal-active-fail'
+  ));
+  r.textContent = '\u25CF Result';
+  if (phase === 'A') {
+    a.classList.add('cal-active-a');
+  } else if (phase === 'B') {
+    a.classList.add('cal-done');
+    b.classList.add('cal-active-b');
+  } else if (phase === 'success') {
+    a.classList.add('cal-done');
+    b.classList.add('cal-done');
+    r.classList.add('cal-active-success');
+    r.textContent = '\u25CF Result \u2014 OK';
+  } else if (phase === 'fail') {
+    r.classList.add('cal-active-fail');
+    r.textContent = '\u25CF Result \u2014 Retry';
+  }
+}
+
+// ── Audio parser (A, lines) ───────────────────────────────────────────────────
+function parseAudio(payload) {
+  const parts = payload.split(',');
+  if (parts.length < 6) return;
+  const bass   = parseFloat(parts[0]);
+  const mid    = parseFloat(parts[1]);
+  const treble = parseFloat(parts[2]);
+  const energy = parseFloat(parts[3]);
+  const beat   = parseInt(parts[4]);
+  const drop   = parseInt(parts[5]);
+  setBar('barBass',   bass);
+  setBar('barMid',    mid);
+  setBar('barTreble', treble);
+  setBar('barEnergy', energy);
+  flashBeat(beat, drop);
+
+  // Rate-limited audio log (one entry per 500 ms)
+  const now = Date.now();
+  if (now - gLastAudioLog >= 500) {
+    gLastAudioLog = now;
+    const ts = gConnectTime ? ((now - gConnectTime) / 1000).toFixed(1) : '—';
+    const line = `+${ts}s B:${bass.toFixed(2)} M:${mid.toFixed(2)} T:${treble.toFixed(2)} E:${energy.toFixed(2)}${beat ? ' BEAT' : ''}${drop ? ' DROP' : ''}`;
+    appendAudioLog(line);
+  }
+}
+
+function appendAudioLog(line) {
+  const log = document.getElementById('audioLog');
+  if (!log) return;
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.textContent = line;
+  log.appendChild(div);
+  // Change 2: keep at most 200 lines
+  while (log.children.length > 200) log.removeChild(log.firstChild);
+  if (gAudioAutoScroll) log.scrollTop = log.scrollHeight;
+}
+
+function clearAudioLog() {
+  const log = document.getElementById('audioLog');
+  if (log) log.innerHTML = '';
+}
+
+function copyAudioLog() {
+  const log = document.getElementById('audioLog');
+  if (!log) return;
+  const text = Array.from(log.querySelectorAll('.log-line')).map(el => el.textContent).join('\n');
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+function toggleAudioScroll() {
+  gAudioAutoScroll = !gAudioAutoScroll;
+  const btn = document.getElementById('audioScrollBtn');
+  if (btn) btn.textContent = 'Auto-scroll ' + (gAudioAutoScroll ? '✓' : '✗');
+}
+
+// ── Motion log functions ──────────────────────────────────────────────────────
+function appendMotionLog(line) {
+  const log = document.getElementById('motionLog');
+  if (!log) return;
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.textContent = line;
+  log.appendChild(div);
+  while (log.children.length > 200) log.removeChild(log.firstChild);
+  if (gMotionAutoScroll) log.scrollTop = log.scrollHeight;
+}
+
+function clearMotionLog() {
+  const log = document.getElementById('motionLog');
+  if (log) log.innerHTML = '';
+}
+
+function copyMotionLog() {
+  const log = document.getElementById('motionLog');
+  if (!log) return;
+  const text = Array.from(log.querySelectorAll('.log-line')).map(el => el.textContent).join('\n');
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+function toggleMotionScroll() {
+  gMotionAutoScroll = !gMotionAutoScroll;
+  const btn = document.getElementById('motionScrollBtn');
+  if (btn) btn.textContent = 'Auto-scroll ' + (gMotionAutoScroll ? '✓' : '✗');
+}
+
+function setBar(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.style.height = Math.min(Math.max(val, 0), 1) * 100 + '%';
+}
+
+let beatTimer = null, dropTimer = null;
+function flashBeat(beat, drop) {
+  const bc = document.getElementById('beatChip');
+  const dc = document.getElementById('dropChip');
+  if (beat) {
+    bc.classList.add('active');
+    clearTimeout(beatTimer);
+    beatTimer = setTimeout(() => bc.classList.remove('active'), 150);
+  }
+  if (drop) {
+    dc.classList.add('drop-active');
+    clearTimeout(dropTimer);
+    dropTimer = setTimeout(() => dc.classList.remove('drop-active'), 300);
+  }
+}
+
+// ── Settings parser (S, lines) ────────────────────────────────────────────────
+function parseSetting(payload) {
+  console.log('[parseSetting]', payload);
+  const parts = payload.split(',');
+  if (parts.length < 2) return;
+  const id  = parseInt(parts[0]);
+  const val = parseInt(parts[1]);
+  if (!isNaN(id) && !isNaN(val)) {
+    updateSettingUI(id, val);
+    if (id === 200) {
+      updateModeBadge(val);
+      // If firmware left impact wave mode, reset the test dropdown to Off
+      if (val !== IMPACT_WAVE_SLOT) {
+        const iwCtrl = document.querySelector('[data-setting-id="122"]');
+        if (iwCtrl && parseInt(iwCtrl.value) !== 0) {
+          iwCtrl.value = 0;
+          gSettingsValues[122] = 0;
+        }
+      }
+    }
+    if (id === 201) updateBriBadge(val);
+    // Calibration status
+    if (id === 13) {
+      appendCalOutput('S,' + payload);
+      if (val === 1) setCalPhase('success');
+    }
+  }
+}
+
+// ── Telemetry parser (T, lines) ───────────────────────────────────────────────
+function parseTelemetry(hex) {
+  if (hex.length < 72) return;  // 36 bytes = 72 hex chars
+  const bytes = new Uint8Array(hex.match(/.{2}/g).map(b => parseInt(b, 16)));
+  if (bytes.length < 36) return;
+  const dv = new DataView(bytes.buffer);
+  const f = {};
+  let off = 0;
+  f.version    = dv.getUint8(off++);
+  f.mode       = dv.getUint8(off++);
+  f.brightness = dv.getUint8(off++);
+  f.variation  = dv.getUint8(off++);
+  f.bass       = dv.getInt16(off, true) / 32767.0; off += 2;
+  f.mid        = dv.getInt16(off, true) / 32767.0; off += 2;
+  f.treble     = dv.getInt16(off, true) / 32767.0; off += 2;
+  f.energy     = dv.getInt16(off, true) / 32767.0; off += 2;
+  f.beat       = dv.getUint8(off++);
+  f.drop       = dv.getUint8(off++);
+  f.accel_x    = dv.getInt16(off, true) / 1000.0; off += 2;
+  f.accel_y    = dv.getInt16(off, true) / 1000.0; off += 2;
+  f.accel_z    = dv.getInt16(off, true) / 1000.0; off += 2;
+  f.gyro_x     = dv.getInt16(off, true); off += 2;
+  f.gyro_y     = dv.getInt16(off, true); off += 2;
+  f.gyro_z     = dv.getInt16(off, true); off += 2;
+  f.tilt_mag   = dv.getUint8(off++) / 255.0;
+  f.spin_rate  = dv.getUint8(off++) / 255.0 * 720.0;
+  f.is_idle    = dv.getUint8(off++);
+  f.tap_event  = dv.getUint8(off++);
+  f.overlay_flags = dv.getUint16(off, true); off += 2;
+  f.diag_active = dv.getUint8(off++);
+  const pitch_q7 = dv.getInt8(off++);
+  const roll_q7  = dv.getInt8(off++);
+  f.pitchDeg = pitch_q7 * 180.0 / 127.0;
+  f.rollDeg  = roll_q7  * 180.0 / 127.0;
+  // reserved: off++
+
+  renderTelemetry(f);
+}
+
+// Tap pill element IDs indexed by tap_event value (0=none, 1=axial+, 2=axial−, 3=lateral, 4=unknown)
+const TAP_PILL_IDS = [null, 'tapAxialPlus', 'tapAxialMinus', 'tapLateral', 'tapUnknown'];
+const TAP_LOG_NAMES = ['', 'axial+', 'axial−', 'lateral', 'unknown'];
+
+function renderTelemetry(f) {
+  // Audio bars (prefer T frame when available)
+  setBar('barBass',   f.bass);
+  setBar('barMid',    f.mid);
+  setBar('barTreble', f.treble);
+  setBar('barEnergy', f.energy);
+  if (f.beat || f.drop) flashBeat(f.beat, f.drop);
+
+  // IMU accel/gyro grid
+  setText('imuAX', f.accel_x.toFixed(3) + 'g');
+  setText('imuAY', f.accel_y.toFixed(3) + 'g');
+  setText('imuAZ', f.accel_z.toFixed(3) + 'g');
+  setText('imuGX', f.gyro_x + '°/s');
+  setText('imuGY', f.gyro_y + '°/s');
+  setText('imuGZ', f.gyro_z + '°/s');
+
+  // Pitch / Roll
+  setText('imuPitch', f.pitchDeg.toFixed(1) + '°');
+  setText('imuRoll',  f.rollDeg.toFixed(1)  + '°');
+
+  // Tilt: value + bar
+  const tiltPct = (f.tilt_mag * 100).toFixed(0);
+  setText('imuTilt', tiltPct + '%');
+  const tiltBar = document.getElementById('tiltBar');
+  if (tiltBar) tiltBar.style.width = tiltPct + '%';
+
+  // Spin: value + color class
+  const spinEl = document.getElementById('imuSpin');
+  const spinLbl = document.getElementById('spinLabel');
+  if (spinEl) {
+    spinEl.textContent = f.spin_rate.toFixed(0) + '°/s';
+    spinEl.className = 'imu-val ' + (f.spin_rate < 50 ? 'spin-slow' : f.spin_rate < 200 ? 'spin-mid' : 'spin-fast');
+  }
+  if (spinLbl) {
+    spinLbl.textContent = f.spin_rate < 50 ? 'stationary' : f.spin_rate < 200 ? 'slow spin' : 'fast spin';
+  }
+
+  // Idle stage badge
+  const idleBadge = document.getElementById('idleBadge');
+  if (idleBadge) {
+    if (!f.is_idle) {
+      idleBadge.textContent = 'Active';
+      idleBadge.className = 'idle-badge';
+    } else {
+      const elapsed = gIdleStartMs ? (Date.now() - gIdleStartMs) / 1000 : 0;
+      let stageText;
+      if (elapsed < 90)       stageText = 'Stage 1 — Dimming';
+      else if (elapsed < 120) stageText = 'Stage 2 — End Glow';
+      else                    stageText = 'Stage 3 — Sleep';
+      idleBadge.textContent = stageText;
+      idleBadge.className = 'idle-badge active';
+    }
+  }
+
+  // Tap indicator pills — flash matching pill 600 ms
+  if (f.tap_event !== 0 && f.tap_event < TAP_PILL_IDS.length) {
+    const pillId = TAP_PILL_IDS[f.tap_event];
+    if (pillId) {
+      const pill = document.getElementById(pillId);
+      if (pill) {
+        pill.classList.add('active');
+        setTimeout(() => pill.classList.remove('active'), 600);
+      }
+    }
+  }
+
+  // Overlay flags (bit 0=sparkle, bit 1=tap burst, bit 2=idle dim, bit 3=drop panic)
+  const setOverlay = (id, active) => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'overlay-chip' + (active ? ' active' : '');
+  };
+  setOverlay('overlaySparkle',  !!(f.overlay_flags & 0x01));
+  setOverlay('overlayBurst',    !!(f.overlay_flags & 0x02));
+  setOverlay('overlayIdleDim',  !!(f.overlay_flags & 0x04));
+  const dropEl = document.getElementById('overlayDrop');
+  if (dropEl) dropEl.className = 'overlay-chip' + (!!(f.overlay_flags & 0x08) ? ' drop-active-chip' : '');
+
+  // SFLP status chip — green when in a SFLP-driven mode (14=Tilt Thermo, 15=Space Lock)
+  const sflpEl = document.getElementById('sflpStatus');
+  if (sflpEl) sflpEl.className = 'overlay-chip' + (f.mode === 14 || f.mode === 15 ? ' sflp-active' : '');
+
+  // Mode variation label (◄► hint for modes with named variants)
+  const varNames = MODE_VARIATION_NAMES[f.mode];
+  const varEl = document.getElementById('modeVariation');
+  if (varEl) varEl.textContent = varNames && f.variation < varNames.length ? '◄► ' + varNames[f.variation] : '';
+
+  // Mode / brightness state
+  updateModeBadge(f.mode);
+  updateBriBadge(f.brightness);
+  updateSettingUI(200, f.mode);
+  updateSettingUI(201, f.brightness);
+
+  // ── Motion log events ──────────────────────────────────────────────────────
+  const nowMs = Date.now();
+  const ts = () => gConnectTime ? '+' + ((nowMs - gConnectTime) / 1000).toFixed(1) + 's' : '+?s';
+
+  // Tap event → immediate log line
+  if (f.tap_event !== 0) {
+    const tapName = TAP_LOG_NAMES[f.tap_event] || '?';
+    appendMotionLog(`${ts()}  TAP ${tapName}  tilt=${tiltPct}%  spin=${f.spin_rate.toFixed(0)}°/s`);
+  }
+
+  // Idle state transitions
+  if (gPrevIsIdle !== -1 && f.is_idle !== gPrevIsIdle) {
+    if (f.is_idle) {
+      gIdleStartMs = nowMs;
+      appendMotionLog(`${ts()}  IDLE entered`);
+    } else {
+      gIdleStartMs = 0;
+      appendMotionLog(`${ts()}  IDLE exited  (motion resumed)`);
+    }
+  } else if (f.is_idle && gIdleStartMs === 0) {
+    // First frame after connect while already idle
+    gIdleStartMs = nowMs;
+  }
+  gPrevIsIdle = f.is_idle;
+
+  // Overlay flag transitions
+  if (gPrevOverlayFlags !== -1 && f.overlay_flags !== gPrevOverlayFlags) {
+    const overlayNames = ['sparkle', 'tap-burst', 'idle-dim', 'drop-panic'];
+    overlayNames.forEach((name, i) => {
+      const wasSet = !!(gPrevOverlayFlags & (1 << i));
+      const isSet  = !!(f.overlay_flags & (1 << i));
+      if (isSet && !wasSet)  appendMotionLog(`${ts()}  OVERLAY ${name} active`);
+      if (!isSet && wasSet)  appendMotionLog(`${ts()}  OVERLAY ${name} cleared`);
+    });
+  }
+  gPrevOverlayFlags = f.overlay_flags;
+
+  // Throttled tilt/spin summary every 2 seconds
+  if (nowMs - gLastMotionLog >= 2000) {
+    gLastMotionLog = nowMs;
+    appendMotionLog(`${ts()}  tilt=${tiltPct}%  spin=${f.spin_rate.toFixed(0)}°/s  energy=${f.energy.toFixed(2)}`);
+  }
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// Change 4: update cycle pill highlights when mode changes
+function updateModeBadge(mode) {
+  const el = document.getElementById('modeBadge');
+  if (el) el.textContent = mode + ' ' + (MODE_NAMES[mode] || '?');
+  const sel = document.getElementById('modeSelect');
+  if (sel && sel.value != mode) sel.value = mode;
+  // Refresh cycle pill highlights
+  document.querySelectorAll('.cycle-pill').forEach(pill => {
+    pill.classList.toggle('active', parseInt(pill.dataset.mode) === mode);
+  });
+}
+
+function updateBriBadge(bri) {
+  const fill = document.getElementById('briBadge');
+  const val  = document.getElementById('briVal');
+  if (fill) fill.style.width = (bri / 255 * 100) + '%';
+  if (val)  val.textContent = bri;
+}
+
+// ── Write to device ───────────────────────────────────────────────────────────
+function writeSetting(id, value) {
+  writeRaw(`$S ${id} ${value}\n`);
+}
+
+// Impact Wave test helper — when the dropdown changes, also switch/restore mode.
+const IMPACT_WAVE_SLOT = 17;
+function handleImpactWaveTypeChange(v) {
+  if (v > 0) {
+    const cur = gSettingsValues[200] ?? 0;
+    if (cur !== IMPACT_WAVE_SLOT) gImpWavePrevMode = cur;
+    writeSetting(200, IMPACT_WAVE_SLOT);
+  } else {
+    writeSetting(200, gImpWavePrevMode);
+  }
+}
+
+function writeRaw(str) {
+  if (!gRxChar) return;
+  gRxChar.writeValueWithoutResponse(new TextEncoder().encode(str)).catch(() => {});
+}
+
+function sendButton(id) {
+  if (!gRxChar) return;
+  // Bluefruit Controller packet: !B<id_char><1><checksum>
+  const idChar = typeof id === 'string' ? id.charCodeAt(0) : id;
+  const sum = 0x21 + 0x42 + idChar + 0x31;
+  const pkt = new Uint8Array([0x21, 0x42, idChar, 0x31, (~sum) & 0xFF]);
+  gRxChar.writeValueWithoutResponse(pkt).catch(() => {});
+}
+
+function sendCmd() {
+  const inp = document.getElementById('rawCmdInput');
+  if (!inp) return;
+  let cmd = inp.value;
+  if (!cmd.endsWith('\n')) cmd += '\n';
+  writeRaw(cmd);
+}
+
+function runImuCal() {
+  // Reset phase badges
+  ['calPhaseA', 'calPhaseB'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('cal-active-a', 'cal-active-b', 'cal-done', 'cal-active-success', 'cal-active-fail');
+  });
+  const r = document.getElementById('calPhaseResult');
+  if (r) {
+    r.classList.remove('cal-active-a', 'cal-active-b', 'cal-done', 'cal-active-success', 'cal-active-fail');
+    r.textContent = '\u25CF Result';
+  }
+  writeSetting(13, 0);
+  appendCalOutput('Sent $S 13 0 — waiting for firmware response...');
+}
+
+function appendCalOutput(line) {
+  const ta = document.getElementById('calOutput');
+  if (ta) {
+    ta.value += line + '\n';
+    ta.scrollTop = ta.scrollHeight;
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+// Change 3: skipped modes now include 6, 8, 9, 12, 13
+function buildModeSelect() {
+  const sel = document.getElementById('modeSelect');
+  if (!sel) return;
+  MODE_NAMES.forEach((name, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    const isSkipped = SKIPPED_MODES.has(i);
+    o.textContent = i + ' — ' + name + (isSkipped ? ' (skipped)' : '');
+    if (isSkipped) o.dataset.skipped = '1';
+    sel.appendChild(o);
+  });
+}
+
+// Change 4: build clickable pill-chain for BLE Button 1 cycle
+function buildCyclePills() {
+  const container = document.getElementById('cyclePills');
+  if (!container) return;
+  CYCLE_MODES.forEach((modeId, idx) => {
+    if (idx > 0) {
+      const arrow = document.createElement('span');
+      arrow.className = 'cycle-arrow';
+      arrow.textContent = '→';
+      container.appendChild(arrow);
+    }
+    const pill = document.createElement('span');
+    pill.className = 'cycle-pill';
+    pill.dataset.mode = modeId;
+    pill.textContent = MODE_NAMES[modeId] || String(modeId);
+    pill.title = 'Jump to mode ' + modeId;
+    pill.addEventListener('click', () => writeSetting(200, modeId));
+    container.appendChild(pill);
+  });
+}
+
+function writeDiag(sub) {
+  if (!gRxChar) return;
+  writeRaw('$G ' + sub + '\n');
+}
+
+buildSettingsTables();
+buildModeSelect();
+buildCyclePills();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[SW] Registered:', reg.scope))
+      .catch(err => console.warn('[SW] Registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
