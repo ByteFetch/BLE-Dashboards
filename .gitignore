@@ -1,0 +1,11 @@
+# Ignore everything
+*
+*/
+
+# Except these dashboard files
+!.gitignore
+!README.md
+!GlowBone/
+!GlowBone/glowbone_dashboard.html
+!GlowBone/manifest.json
+!GlowBone/sw.js
