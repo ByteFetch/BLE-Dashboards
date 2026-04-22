@@ -624,11 +624,11 @@ const MODE_NAMES = [
   'Pulse Rings', 'Deep Aurora', 'Pacifica', 'Breathe', 'Meteor Shower',
   'Bone Balance', 'Spin Hue', 'Idle Dim',
   'Gyro Spin Trails', 'Tilt Thermo', 'Space Lock', 'Liquid Light',
-  'Impact Wave', 'Impact Wave Lateral', 'Impact Wave Axial',
+  'Impact Wave', 'Impact Wave Lateral', 'Impact Wave Axial', 'Popcorn',
 ];
 
 // Change 4: modes in BLE Button 1 cycle
-const CYCLE_MODES = [0, 1, 2, 3, 4, 5, 7, 10, 11, 14, 15, 16, 18, 19];
+const CYCLE_MODES = [0, 1, 2, 3, 4, 5, 7, 10, 11, 14, 15, 16, 18, 19, 20];
 
 // Modes not in BLE cycle
 const SKIPPED_MODES = new Set([6, 8, 9, 12, 13, 17]);
@@ -638,6 +638,7 @@ const MODE_VARIATION_NAMES = {
   14: ['Rainbow', 'Fire', 'Ocean'],
   15: ['Rainbow', 'Comet', 'Stripe'],
   16: ['Cyan/Teal', 'Lava', 'Acid Green'],
+  20: ['Rainbow', 'Heat', 'Ocean', 'Lava', 'Party'],
 };
 
 // ── Settings metadata (mirrors firmware registry) ─────────────────────────────
@@ -732,6 +733,12 @@ const TUNABLES = [
     desc: 'Radial scale of the wave pattern (1=wide bands, 20=tight rings)' },
   { id: 136, name: 'Spark Decay',   type: 'int', min: 1,  max: 10, step: 1,
     desc: 'Spark persistence decay (1=long ember linger, 10=instant)' },
+
+  { id: null, name: '── Popcorn (mode 20) ──', type: 'separator' },
+  { id: 142, name: 'Pop Speed',    type: 'int', min: 1, max: 100, step: 1,
+    desc: 'Gravity/velocity scale — higher = faster fall, lower = floaty high pops' },
+  { id: 143, name: 'Audio Reactive', type: 'bool',
+    desc: 'Beat-triggered pops with sMid height scaling; off = free-running random pops' },
 
 ];
 
