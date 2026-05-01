@@ -52,6 +52,23 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
 }
 #statusDot.connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
 
+/* Playlist tabs */
+.playlist-tab {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid #374151;
+  background: transparent;
+  color: #9ca3af;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+  white-space: nowrap;
+}
+.playlist-tab:hover { background: #2a2d3a; color: #e0e0e0; }
+.playlist-tab.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
+
 /* Effect cycle pill-chain */
 .cycle-pill {
   display: inline-block;
@@ -69,7 +86,7 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
 .cycle-pill.active { background: #3b82f6; color: #fff; font-weight: 600; }
 .cycle-arrow { color: #374151; font-size: 11px; align-self: center; }
 
-/* Audio bars — Change 1: bars container is fixed width, flex-shrink:0 */
+/* Audio bars */
 .bar-row { display: flex; gap: 8px; align-items: flex-end; height: 60px; }
 .bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 0; }
 .bar-bg {
@@ -132,7 +149,7 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
 }
 .idle-badge.active { background: #1d4ed8; color: #bfdbfe; }
 
-/* Tap indicator pills — 4 persistent pills, flash on event */
+/* Tap indicator pills */
 .tap-pill {
   display: inline-block;
   padding: 3px 8px;
@@ -176,7 +193,7 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
   transition: width 0.1s;
 }
 
-/* Mode / brightness bar */
+/* Effect / brightness bar */
 .mode-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mode-badge {
   background: #3b82f6;
@@ -205,7 +222,7 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
 }
 .bri-val { font-size: 13px; color: #9ca3af; min-width: 30px; text-align: right; }
 
-/* Mode selector in controls */
+/* Effect selector in controls */
 #modeSelect option[data-skipped] { color: #4b5563; font-style: italic; }
 
 /* Audio log + Motion log */
@@ -358,10 +375,11 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
   </div>
 </div>
 
-<!-- ── Effect Cycle Visualizer ────────────────────────────────────────────── -->
+<!-- ── Playlist Selector ──────────────────────────────────────────────────── -->
 <div class="section" style="padding:10px 14px;">
-  <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Effect Cycle — click to jump</div>
-  <div id="cyclePills" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
+  <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Playlist — click to jump</div>
+  <div id="playlistTabs" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;"></div>
+  <div id="playlistPills" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
 </div>
 
 <!-- ── State + Controls (combined) ───────────────────────────────────────────── -->
@@ -529,16 +547,16 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
 
     <!-- LEFT: Tunables -->
     <div style="flex:2;min-width:320px;">
-      <div class="section-title">Tunables (ids 1–13, 100–116, 119–136)</div>
+      <div class="section-title">Tunables</div>
       <table class="settings-table">
         <thead><tr><th>ID</th><th>Name</th><th>Value</th><th style="color:#4b5563;font-style:italic;">Description</th></tr></thead>
         <tbody id="tunablesBody"></tbody>
       </table>
     </div>
 
-    <!-- RIGHT: Mode State -->
+    <!-- RIGHT: Effect State -->
     <div style="flex:1;min-width:260px;">
-      <div class="section-title">Mode State (ids 200–210)</div>
+      <div class="section-title">Effect State (ids 200–210)</div>
       <table class="settings-table">
         <thead><tr><th>ID</th><th>Name</th><th>Value</th><th style="color:#4b5563;font-style:italic;">Description</th></tr></thead>
         <tbody id="modeStateBody"></tbody>
@@ -554,7 +572,7 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
   <summary style="cursor:pointer;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;user-select:none;padding:2px 0;">IMU Calibration</summary>
   <div style="color:#9ca3af;font-size:12px;line-height:1.65;margin-bottom:12px;">
     <p style="margin-bottom:8px;">Calibration identifies the staff's <strong style="color:#e0e0e0;">long axis</strong> — which direction in IMU space runs from base to tip.
-    This is required for <strong style="color:#e0e0e0;">Mode 10 (Bone Balance)</strong> and <strong style="color:#e0e0e0;">Mode 11 (Spin-Responsive Hue)</strong> to respond correctly to tilt and spin.
+    This is required for <strong style="color:#e0e0e0;">Bone Balance (effect 2)</strong> to respond correctly to tilt.
     With the IMU mounted at the bottom (readable left-to-right when the bone stands upright), the expected long axis after a successful calibration is <strong style="color:#e0e0e0;">Y+ (axis id 2)</strong>.</p>
     <p style="margin-bottom:6px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;">Steps</p>
     <ol style="margin:0 0 8px 18px;display:flex;flex-direction:column;gap:5px;">
@@ -608,7 +626,6 @@ let gDevice, gServer, gTxChar, gRxChar;
 let lineBuffer = '';
 let gSettingsValues = {};  // id (number) → value (number)
 let gConnectTime = null;
-let gImpWavePrevMode = 0;  // mode to restore when impact_wave_type returns to Off
 let gLastAudioLog  = 0;
 let gLastMotionLog = 0;
 let gAudioAutoScroll  = true;
@@ -616,33 +633,71 @@ let gMotionAutoScroll = true;
 let gIdleStartMs      = 0;
 let gPrevIsIdle       = -1;   // -1 = uninitialized
 let gPrevOverlayFlags = -1;   // -1 = uninitialized
+let gDashPlaylistIdx  = 0;    // active playlist tab
+let gCurrentMode      = 0;    // last known firmware effect index
+let gCurrentAnimIdx   = -1;   // last known animartrix index (-1 = unknown)
 
-// ── Mode metadata ─────────────────────────────────────────────────────────────
-// Change 3 + 7: mode 10 = Bone Balance, mode 12 = Idle Dim
-const MODE_NAMES = [
-  'Wave', 'Animartrix', 'Noise', 'Helix Tracer', 'Ember Rain',
-  'Pulse Rings', 'Deep Aurora', 'Pacifica', 'Breathe', 'Meteor Shower',
-  'Bone Balance', 'Spin Hue', 'Idle Dim',
-  'Gyro Spin Trails', 'Tilt Thermo', 'Space Lock', 'Liquid Light',
-  'Impact Wave', 'Impact Wave Lateral', 'Impact Wave Axial', 'Popcorn',
+// ── Effect metadata ───────────────────────────────────────────────────────────
+const EFFECT_NAMES = [
+  'Wave',                 // 0
+  'Animartrix',           // 1
+  'Bone Balance',         // 2
+  'Idle Loot Glow',       // 3 — isAutoOnly, not in any playlist
+  'Impact Wave Lateral',  // 4 — motion-triggered, not in any playlist
+  'Impact Wave Axial',    // 5 — motion-triggered, not in any playlist
+  'Popcorn',              // 6
 ];
 
-// Change 4: modes in BLE Button 1 cycle
-const CYCLE_MODES = [0, 1, 2, 3, 4, 5, 7, 10, 11, 14, 15, 16, 18, 19, 20];
+// ── Playlist definitions (mirrors kPlaylists[] in fx_playlist.h exactly) ─────
+const PLAYLISTS = [
+  {
+    name: 'Audio Reactive',
+    entries: [
+      // — Favs —
+      { mode: 0, animIdx: -1, name: 'Wave',               fav: true  },
+      { mode: 1, animIdx:  3, name: 'RGB Blobs 2',        fav: true  },
+      { mode: 1, animIdx: 11, name: 'Spiralus',           fav: true  },
+      { mode: 1, animIdx: 16, name: 'Caleidoscope 2',     fav: true  },
+      { mode: 1, animIdx: 23, name: 'Rings',              fav: true  },
+      { mode: 1, animIdx: 29, name: 'Complex Kaleido 6',  fav: true  },
+      { mode: 1, animIdx: 32, name: 'Module Exp 1',       fav: true  },
+      { mode: 1, animIdx: 33, name: 'Module Exp 2',       fav: true  },
+      { mode: 1, animIdx: 36, name: 'Module Exp 5',       fav: true  },
+      { mode: 1, animIdx: 41, name: 'Module Exp 10',      fav: true  },
+      { mode: 1, animIdx: 42, name: 'Module SM 1',        fav: true  },
+      { mode: 1, animIdx: 43, name: 'Module SM 2',        fav: true  },
+      { mode: 1, animIdx: 48, name: 'Module SM 8',        fav: true  },
+      { mode: 6, animIdx: -1, name: 'Popcorn',            fav: true  },
+      // — Non-favs —
+      { mode: 1, animIdx: 20, name: 'Waves',              fav: false },
+      { mode: 1, animIdx: 27, name: 'Complex Kaleido 4',  fav: false },
+      { mode: 1, animIdx: 31, name: 'Parametric Water',   fav: false },
+      { mode: 1, animIdx: 39, name: 'Module Exp 8',       fav: false },
+      { mode: 1, animIdx: 40, name: 'Module Exp 9',       fav: false },
+      { mode: 1, animIdx: 45, name: 'Module SM 4',        fav: false },
+    ]
+  },
+  {
+    name: 'Motion Effects',
+    entries: [
+      { mode: 2, animIdx: -1, name: 'Bone Balance', fav: false },
+    ]
+  },
+  {
+    name: 'Testing',
+    entries: [
+      { mode: 1, animIdx: -1, name: 'Animartrix (All)', fav: false },
+    ]
+  },
+];
 
-// Modes not in BLE cycle
-const SKIPPED_MODES = new Set([6, 8, 9, 12, 13, 17]);
-
-// Left/Right variation label names per mode
-const MODE_VARIATION_NAMES = {
-  14: ['Rainbow', 'Fire', 'Ocean'],
-  15: ['Rainbow', 'Comet', 'Stripe'],
-  16: ['Cyan/Teal', 'Lava', 'Acid Green'],
-  20: ['Rainbow', 'Heat', 'Ocean', 'Lava', 'Party'],
+// Left/Right variation label names per effect index
+const EFFECT_VARIATION_NAMES = {
+  0: ['Blue', 'Red', 'Green', 'Rainbow'],  // Wave palette
+  2: ['Blue', 'Red', 'Green', 'Rainbow'],  // Bone Balance palette
 };
 
 // ── Settings metadata (mirrors firmware registry) ─────────────────────────────
-// Change 6: grouped with separators, ids 105-107 labeled skipped, ids 108-110 added
 const TUNABLES = [
   { id: null, name: '── Motion / Idle ──', type: 'separator' },
   { id: 1,  name: 'idle_delay_sec',      type: 'int',     min: 3,   max: 1800, step: 1,  desc: 'Seconds of stillness before idle mode starts' },
@@ -651,14 +706,14 @@ const TUNABLES = [
   { id: 108, name: 'idle_stage1_sec',    type: 'int',     min: 10,  max: 1800, step: 5,  desc: 'Duration of Stage 1 dimming phase (seconds)' },
   { id: 109, name: 'idle_stage2_sec',    type: 'int',     min: 10,  max: 1800, step: 5,  desc: 'Duration of Stage 2 end-glow phase (seconds)' },
   { id: 110, name: 'idle_stage3_sec',    type: 'int',     min: 10,  max: 1800, step: 5,  desc: 'Duration of Stage 3 sleep phase (seconds)' },
-  { id: 141, name: 'transition_ms',     type: 'int',     min: 100, max: 2000, step: 50, desc: 'Mode crossfade duration in milliseconds (100=snap, 2000=slow fade)' },
+  { id: 141, name: 'transition_ms',      type: 'int',     min: 100, max: 2000, step: 50, desc: 'Effect crossfade duration in milliseconds (100=snap, 2000=slow fade)' },
 
   { id: null, name: '── Audio ──', type: 'separator' },
-  { id: 121, name: 'audio_preset',         type: 'select', options: ['Home', 'Bar', 'Festival'],
-    desc: 'Audio environment preset (Home=quiet/testing, Bar=moderate, Festival=loud bass). mic_gain and signal_conditioning changes require reboot to take effect.' },
+  { id: 121, name: 'audio_preset',       type: 'select', options: ['Home', 'Bar', 'Festival'],
+    desc: 'Audio environment preset (Home=quiet/testing, Bar=moderate, Festival=loud bass). mic_gain and signal_conditioning changes require reboot.' },
   { id: 5,  name: 'beat_sensitivity',    type: 'percent', min: 1,   max: 100,  step: 1,  desc: 'Beat detection threshold — lower = more sensitive' },
-  { id: 6,   name: 'mic_gain',              type: 'percent', min: 1,   max: 100,  step: 1,  desc: 'Microphone gain level (reboot required for change to take effect)' },
-  { id: 120, name: 'signal_conditioning',  type: 'bool',                                   desc: 'Enable FastLED signal conditioning / noise gate (takes effect on reboot)' },
+  { id: 6,  name: 'mic_gain',            type: 'percent', min: 1,   max: 100,  step: 1,  desc: 'Microphone gain level (reboot required for change to take effect)' },
+  { id: 120, name: 'signal_conditioning', type: 'bool',                                  desc: 'Enable FastLED signal conditioning / noise gate (takes effect on reboot)' },
   { id: 7,  name: 'max_brightness',      type: 'int',     min: 10,  max: 255,  step: 5,  desc: 'Global LED brightness ceiling (0–255)' },
   { id: 8,  name: 'plotter_legacy',      type: 'bool',                                   desc: 'Use legacy Serial Plotter output format' },
   { id: 9,  name: 'telemetry_rate',      type: 'int',     min: 1,   max: 30,   step: 1,  desc: 'BLE telemetry frames per second' },
@@ -669,11 +724,11 @@ const TUNABLES = [
   { id: 11, name: 'imu_long_axis',       type: 'select',  options: ['0 X+','1 X−','2 Y+','3 Y−','4 Z+','5 Z−'], desc: 'Staff long axis detected by calibration' },
   { id: 12, name: 'tap_overlay_enabled', type: 'bool',                                   desc: 'Show tap-burst color overlay on tap event' },
   { id: 13, name: 'imu_calibrated',      type: 'bool',                                   desc: 'Set by firmware after successful IMU calibration' },
-  { id: 100, name: 'auto_cal_enabled',        type: 'bool',                              desc: 'Re-run axis calibration automatically on boot' },
-  { id: 103, name: 'tap_burst_duration_ms',    type: 'int',     min: 200, max: 30000, step: 50,  desc: 'How long the tap-burst overlay stays visible (ms)' },
-  { id: 104, name: 'tap_burst_color',          type: 'select',  options: ['Blue-White','Amber','Green','White'], desc: 'Color scheme for axial tap burst overlay' },
-  { id: 111, name: 'tap_lateral_duration_ms',  type: 'int',     min: 200, max: 30000, step: 50,  desc: 'Duration of lateral tap overlay (ms)' },
-  { id: 112, name: 'tap_sweep_pct',            type: 'int',     min: 10,  max: 100,  step: 5,   desc: 'Tap sweep coverage — % of staff length' },
+  { id: 100, name: 'auto_cal_enabled',   type: 'bool',                                   desc: 'Re-run axis calibration automatically on boot' },
+  { id: 103, name: 'tap_burst_duration_ms',   type: 'int', min: 200, max: 30000, step: 50,  desc: 'How long the tap-burst overlay stays visible (ms)' },
+  { id: 104, name: 'tap_burst_color',         type: 'select', options: ['Blue-White','Amber','Green','White'], desc: 'Color scheme for axial tap burst overlay' },
+  { id: 111, name: 'tap_lateral_duration_ms', type: 'int', min: 200, max: 30000, step: 50,  desc: 'Duration of lateral tap overlay (ms)' },
+  { id: 112, name: 'tap_sweep_pct',           type: 'int', min: 10,  max: 100,  step: 5,   desc: 'Tap sweep coverage — % of staff length' },
 
   { id: null, name: '── Tap Sparks ──', type: 'separator' },
   { id: 137, name: 'Spark Density',  type: 'int', min: 1,  max: 15,  step: 1,  desc: 'Seeding probability at crest peak (value÷100); lower = fewer sparks' },
@@ -681,65 +736,32 @@ const TUNABLES = [
   { id: 139, name: 'Brightness',     type: 'int', min: 50, max: 255, step: 5,  desc: 'Peak spark brightness cap (0–255)' },
   { id: 140, name: 'Decay Speed',    type: 'int', min: 5,  max: 50,  step: 1,  desc: 'Spark fade rate between flashes (value÷10); higher = faster decay' },
 
-  { id: null, name: '── Mode Variations ──', type: 'separator' },
-  { id: 101, name: 'gravity_palette',         type: 'select',  options: ['Blue','Red','Green','Rainbow'], desc: 'Color palette for Bone Balance (mode 10)' },
-  { id: 102, name: 'spin_hue_rate',           type: 'int',     min: 1,   max: 500,  step: 1,   desc: 'Hue rotation speed for Spin Hue (mode 11)' },
-  { id: 105, name: 'spin_trail_min (mode 13 — skipped)',   type: 'int', min: 1,  max: 60,  step: 1,  desc: 'Min trail length for Gyro Spin Trails (skipped)' },
-  { id: 106, name: 'spin_trail_max (mode 13 — skipped)',   type: 'int', min: 5,  max: 150, step: 1,  desc: 'Max trail length for Gyro Spin Trails (skipped)' },
-  { id: 107, name: 'spin_trail_decay (mode 13 — skipped)', type: 'int', min: 1,  max: 99, step: 1,  desc: 'Trail fade rate for Gyro Spin Trails (skipped)' },
+  { id: null, name: '── Effect Variations ──', type: 'separator' },
+  { id: 101, name: 'gravity_palette', type: 'select', options: ['Blue','Red','Green','Rainbow'], desc: 'Color palette for Bone Balance (effect 2)' },
+  { id: 144, name: 'playlist',        type: 'select', options: ['Audio Reactive','Motion Effects','Testing'],
+    desc: 'Active playlist ($S 144 N; also controlled by the playlist tabs above)' },
 
-  { id: null, name: '── Liquid Light (mode 16) ──', type: 'separator' },
-  { id: 113, name: 'liquid_spring_k',   type: 'int', min: 1,  max: 20, step: 1,
-    desc: 'Gravity strength (÷10). Start ~15. Too low = zero-G; too high = snaps instantly' },
-  { id: 114, name: 'liquid_damping',    type: 'int', min: 50, max: 99, step: 1,
-    desc: 'Damping per frame (÷100). Higher = less sloshing, settles faster' },
-  { id: 115, name: 'liquid_beat_kick',  type: 'int', min: 0,  max: 20, step: 1,
-    desc: 'Beat impulse strength (÷10). Higher = more violent jolt on kick' },
-  { id: 116, name: 'liquid_fill_pct',   type: 'int', min: 5,  max: 95, step: 5,
-    desc: 'Fluid fill level % (5–95). Change takes effect immediately' },
+  { id: null, name: '── Impact Wave Lateral (effect 4) ──', type: 'separator' },
+  { id: 123, name: 'IWL Speed',        type: 'int', min: 1,  max: 10, step: 1, desc: 'Wave expansion speed (1=slow, 10=fast)' },
+  { id: 124, name: 'IWL Sparks',       type: 'int', min: 0,  max: 10, step: 1, desc: 'Trailing white spark density (0=off, 10=heavy)' },
+  { id: 125, name: 'IWL Sharpness',    type: 'int', min: 1,  max:  5, step: 1, desc: 'Wave edge sharpness — power applied to brightness curve (1=soft, 5=crisp)' },
+  { id: 126, name: 'IWL Radial Boost', type: 'int', min: 0,  max: 40, step: 1, desc: 'Angular column radius boost (÷100). Higher = more 3D barrel shape to the wave' },
+  { id: 127, name: 'IWL Color Drift',  type: 'int', min: 1,  max: 10, step: 1, desc: 'Hue rotation speed (1=slow drift, 10=fast cycling)' },
+  { id: 128, name: 'IWL Wave Scale',   type: 'int', min: 1,  max: 10, step: 1, desc: 'Radial scale of the wave pattern (1=wide bands, 10=tight rings)' },
+  { id: 129, name: 'IWL Spark Decay',  type: 'int', min: 1,  max: 10, step: 1, desc: 'Spark persistence decay (1=long ember linger, 10=instant)' },
 
-  { id: null, name: '── Test / Debug ──', type: 'separator' },
-  { id: 122, name: 'impact_wave_type', type: 'select', options: ['Off', 'Base', 'Tip', 'Center'],
-    desc: 'Impact Wave test (mode 17 — skipped in cycle). Select origin; wave loops continuously while non-zero.' },
+  { id: null, name: '── Impact Wave Axial (effect 5) ──', type: 'separator' },
+  { id: 130, name: 'Wave Speed',    type: 'int', min: 1,  max: 20, step: 1, desc: 'Wave expansion speed (1=slow ~6s/cycle, 20=fast ~0.6s/cycle)' },
+  { id: 131, name: 'Spark Amount',  type: 'int', min: 0,  max: 10, step: 1, desc: 'Trailing white spark density (0=off, 10=heavy)' },
+  { id: 132, name: 'Sharpness',     type: 'int', min: 1,  max:  5, step: 1, desc: 'Wave edge sharpness — power applied to brightness curve (1=soft, 5=crisp)' },
+  { id: 133, name: 'Radial Boost',  type: 'int', min: 0,  max: 40, step: 1, desc: 'Angular column radius boost (÷100). Higher = more 3D barrel shape to the wave' },
+  { id: 134, name: 'Color Drift',   type: 'int', min: 1,  max: 10, step: 1, desc: 'Hue rotation speed (1=slow drift, 10=fast cycling)' },
+  { id: 135, name: 'Wave Scale',    type: 'int', min: 1,  max: 20, step: 1, desc: 'Radial scale of the wave pattern (1=wide bands, 20=tight rings)' },
+  { id: 136, name: 'Spark Decay',   type: 'int', min: 1,  max: 10, step: 1, desc: 'Spark persistence decay (1=long ember linger, 10=instant)' },
 
-  { id: null, name: '── Impact Wave Lateral (mode 18) ──', type: 'separator' },
-  { id: 123, name: 'IWL Speed',     type: 'int', min: 1,  max: 10, step: 1,
-    desc: 'Wave expansion speed (1=slow, 10=fast)' },
-  { id: 124, name: 'IWL Sparks',    type: 'int', min: 0,  max: 10, step: 1,
-    desc: 'Trailing white spark density (0=off, 10=heavy)' },
-  { id: 125, name: 'IWL Sharpness',    type: 'int', min: 1,  max:  5, step: 1,
-    desc: 'Wave edge sharpness — power applied to brightness curve (1=soft, 5=crisp)' },
-  { id: 126, name: 'IWL Radial Boost', type: 'int', min: 0,  max: 40, step: 1,
-    desc: 'Angular column radius boost (÷100). Higher = more 3D barrel shape to the wave' },
-  { id: 127, name: 'IWL Color Drift',  type: 'int', min: 1,  max: 10, step: 1,
-    desc: 'Hue rotation speed (1=slow drift, 10=fast cycling)' },
-  { id: 128, name: 'IWL Wave Scale',   type: 'int', min: 1,  max: 10, step: 1,
-    desc: 'Radial scale of the wave pattern (1=wide bands, 10=tight rings)' },
-  { id: 129, name: 'IWL Spark Decay',  type: 'int', min: 1,  max: 10, step: 1,
-    desc: 'Spark persistence decay (1=long ember linger, 10=instant — matches original behavior)' },
-
-  { id: null, name: '── Impact Wave Axial (mode 19) ──', type: 'separator' },
-  { id: 130, name: 'Wave Speed',    type: 'int', min: 1,  max: 20, step: 1,
-    desc: 'Wave expansion speed (1=slow ~6s/cycle, 20=fast ~0.6s/cycle)' },
-  { id: 131, name: 'Spark Amount',  type: 'int', min: 0,  max: 10, step: 1,
-    desc: 'Trailing white spark density (0=off, 10=heavy)' },
-  { id: 132, name: 'Sharpness',     type: 'int', min: 1,  max:  5, step: 1,
-    desc: 'Wave edge sharpness — power applied to brightness curve (1=soft, 5=crisp)' },
-  { id: 133, name: 'Radial Boost',  type: 'int', min: 0,  max: 40, step: 1,
-    desc: 'Angular column radius boost (÷100). Higher = more 3D barrel shape to the wave' },
-  { id: 134, name: 'Color Drift',   type: 'int', min: 1,  max: 10, step: 1,
-    desc: 'Hue rotation speed (1=slow drift, 10=fast cycling)' },
-  { id: 135, name: 'Wave Scale',    type: 'int', min: 1,  max: 20, step: 1,
-    desc: 'Radial scale of the wave pattern (1=wide bands, 20=tight rings)' },
-  { id: 136, name: 'Spark Decay',   type: 'int', min: 1,  max: 10, step: 1,
-    desc: 'Spark persistence decay (1=long ember linger, 10=instant)' },
-
-  { id: null, name: '── Popcorn (mode 20) ──', type: 'separator' },
-  { id: 142, name: 'Pop Speed',    type: 'int', min: 1, max: 100, step: 1,
-    desc: 'Gravity/velocity scale — higher = faster fall, lower = floaty high pops' },
-  { id: 143, name: 'Audio Reactive', type: 'bool',
-    desc: 'Beat-triggered pops with sMid height scaling; off = free-running random pops' },
-
+  { id: null, name: '── Popcorn (effect 6) ──', type: 'separator' },
+  { id: 142, name: 'Pop Speed',      type: 'int',  min: 1, max: 100, step: 1, desc: 'Gravity/velocity scale — higher = faster fall, lower = floaty high pops' },
+  { id: 143, name: 'Audio Reactive', type: 'bool',                             desc: 'Beat-triggered pops with sMid height scaling; off = free-running random pops' },
 ];
 
 const ANIMARTRIX_NAMES = [
@@ -759,33 +781,18 @@ const ANIMARTRIX_NAMES = [
   '50 - Module SM 10', '51 - Fluffy Blobs'
 ];
 
-const WAVE_PAL_NAMES    = ['Blue','Red','Green','Rainbow'];
-const NOISE_PAL_NAMES   = ['Party','Heat','Ocean','Forest','Rainbow'];
-const TRACER_NAMES      = ['Rainbow','Fire','Ice','Mono'];
-const EMBER_NAMES       = ['Hot Orange','Mixed','Cool Blue'];
-const RING_PAL_NAMES    = ['Fire','Ocean','Rainbow','Purple'];
-const AURORA_NAMES      = ['Purple-Blue','Teal-Green','Pink-Magenta'];
-const PACIFICA_NAMES    = ['Blue-Cyan','Purple-Pink','Teal-Green'];
-const METEOR_NAMES      = ['Rings Only','Mixed','Tracer Heavy'];
+const WAVE_PAL_NAMES = ['Blue','Red','Green','Rainbow'];
 
 const MODE_STATE = [
-  { id: 200, name: 'mode',           type: 'mode_select',                                                    desc: 'Active effect slot' },
-  { id: 201, name: 'brightness',     type: 'int',     min: 10,  max: 255,  step: 5,   desc: 'Current brightness (0–255)' },
-  { id: 202, name: 'noise_palette',  type: 'select',  options: NOISE_PAL_NAMES,        desc: 'Color palette for Noise (mode 2)' },
-  { id: 203, name: 'wave_palette',   type: 'select',  options: WAVE_PAL_NAMES,         desc: 'Color palette for Wave (mode 0)' },
-  { id: 204, name: 'tracer_color',   type: 'select',  options: TRACER_NAMES,           desc: 'Color for Helix Tracer (mode 3)' },
-  { id: 205, name: 'ember_color',    type: 'select',  options: EMBER_NAMES,            desc: 'Color for Ember Rain (mode 4)' },
-  { id: 206, name: 'ring_palette',   type: 'select',  options: RING_PAL_NAMES,         desc: 'Palette for Pulse Rings (mode 5)' },
-  { id: 207, name: 'aurora_family',  type: 'select',  options: AURORA_NAMES,           desc: 'Color family for Deep Aurora (mode 6)' },
-  { id: 208, name: 'pacifica_pair',  type: 'select',  options: PACIFICA_NAMES,         desc: 'Color pair for Pacifica (mode 7)' },
-  { id: 209, name: 'meteor_trail',   type: 'select',  options: METEOR_NAMES,           desc: 'Trail style for Meteor Shower (mode 9)' },
-  { id: 210, name: 'animartrix_idx', type: 'select',  options: ANIMARTRIX_NAMES,
+  { id: 200, name: 'mode',           type: 'mode_select',                              desc: 'Active effect slot' },
+  { id: 201, name: 'brightness',     type: 'int',    min: 10,  max: 255, step: 5,      desc: 'Current brightness (0–255)' },
+  { id: 203, name: 'wave_palette',   type: 'select', options: WAVE_PAL_NAMES,           desc: 'Color palette for Wave (effect 0)' },
+  { id: 210, name: 'animartrix_idx', type: 'select', options: ANIMARTRIX_NAMES,
     desc: 'Animartrix animation (0=RGB Blobs 5 … 51=Fluffy Blobs)' },
 ];
 
 // ── Build settings tables on load ─────────────────────────────────────────────
 function buildSettingRow(s, tbody) {
-  // Separator row
   if (s.type === 'separator') {
     const tr = document.createElement('tr');
     tr.className = 'settings-sep';
@@ -820,26 +827,22 @@ function buildSettingRow(s, tbody) {
       o.textContent = opt;
       ctrl.appendChild(o);
     });
-    ctrl.addEventListener('change', () => {
-      const v = parseInt(ctrl.value);
-      writeSetting(s.id, v);
-      if (s.id === 122) handleImpactWaveTypeChange(v);
-    });
+    ctrl.addEventListener('change', () => writeSetting(s.id, parseInt(ctrl.value)));
     tdCtrl.appendChild(ctrl);
   } else if (s.type === 'mode_select') {
     ctrl = document.createElement('select');
     ctrl.className = 's-select';
-    MODE_NAMES.forEach((name, i) => {
+    EFFECT_NAMES.forEach((name, i) => {
       const o = document.createElement('option');
       o.value = i;
-      o.textContent = i + ' ' + name + (SKIPPED_MODES.has(i) ? ' (skipped)' : '');
-      if (SKIPPED_MODES.has(i)) { o.dataset.skipped = '1'; o.style.color = '#4b5563'; o.style.fontStyle = 'italic'; }
+      const isSkipped = (i === 3 || i === 4 || i === 5);
+      o.textContent = i + ' ' + name + (isSkipped ? ' (not in playlist)' : '');
+      if (isSkipped) { o.dataset.skipped = '1'; o.style.color = '#4b5563'; o.style.fontStyle = 'italic'; }
       ctrl.appendChild(o);
     });
     ctrl.addEventListener('change', () => writeSetting(s.id, parseInt(ctrl.value)));
     tdCtrl.appendChild(ctrl);
   } else {
-    // int / percent — number input with Set button inline in same cell
     ctrl = document.createElement('input');
     ctrl.type = 'number';
     ctrl.className = 's-input';
@@ -876,8 +879,6 @@ function updateSettingUI(id, val) {
   if (!ctrl) return;
   if (ctrl.type === 'checkbox') {
     ctrl.checked = (val !== 0);
-  } else if (ctrl.tagName === 'SELECT' || ctrl.tagName === 'select') {
-    ctrl.value = val;
   } else {
     ctrl.value = val;
   }
@@ -906,7 +907,6 @@ async function connect() {
     document.getElementById('connectBtn').textContent = 'Disconnect';
     document.getElementById('connectBtn').onclick = disconnect;
     document.getElementById('connectBtn').disabled = false;
-    // Switch to dashboard (prefixed) mode
     writeRaw('$S 8 0\n');
   } catch (e) {
     setStatus('Connect failed: ' + e.message);
@@ -935,11 +935,10 @@ function setStatus(msg, connected) {
 }
 
 // ── Line reassembly ───────────────────────────────────────────────────────────
-// TX notifications may fragment if MTU < line length. Buffer on '\n'.
 function onNotify(event) {
   lineBuffer += new TextDecoder().decode(event.target.value);
   const lines = lineBuffer.split('\n');
-  lineBuffer = lines.pop();  // incomplete tail back to buffer
+  lineBuffer = lines.pop();
   lines.forEach(line => { if (line.length > 0) parseLine(line); });
 }
 
@@ -949,13 +948,12 @@ function parseLine(line) {
   else if (line.startsWith('A,'))     parseAudio(line.slice(2));
   else if (line.startsWith('S,cal,')) parseCalMessage(line);
   else if (line.startsWith('S,'))     parseSetting(line.slice(2));
-  // Legacy lines (no prefix) — silently ignore
 }
 
-// ── Calibration message handler (S,cal,... lines) ────────────────────────────
+// ── Calibration message handler ───────────────────────────────────────────────
 function parseCalMessage(line) {
   appendCalOutput(line);
-  const msg = line.slice(6).toLowerCase();  // after 'S,cal,'
+  const msg = line.slice(6).toLowerCase();
   if (msg.startsWith('hold')) {
     setCalPhase('A');
   } else if (msg.startsWith('phase a done')) {
@@ -974,7 +972,7 @@ function setCalPhase(phase) {
   [a, b, r].forEach(el => el.classList.remove(
     'cal-active-a', 'cal-active-b', 'cal-done', 'cal-active-success', 'cal-active-fail'
   ));
-  r.textContent = '\u25CF Result';
+  r.textContent = '● Result';
   if (phase === 'A') {
     a.classList.add('cal-active-a');
   } else if (phase === 'B') {
@@ -984,10 +982,10 @@ function setCalPhase(phase) {
     a.classList.add('cal-done');
     b.classList.add('cal-done');
     r.classList.add('cal-active-success');
-    r.textContent = '\u25CF Result \u2014 OK';
+    r.textContent = '● Result — OK';
   } else if (phase === 'fail') {
     r.classList.add('cal-active-fail');
-    r.textContent = '\u25CF Result \u2014 Retry';
+    r.textContent = '● Result — Retry';
   }
 }
 
@@ -1007,7 +1005,6 @@ function parseAudio(payload) {
   setBar('barEnergy', energy);
   flashBeat(beat, drop);
 
-  // Rate-limited audio log (one entry per 500 ms)
   const now = Date.now();
   if (now - gLastAudioLog >= 500) {
     gLastAudioLog = now;
@@ -1024,7 +1021,6 @@ function appendAudioLog(line) {
   div.className = 'log-line';
   div.textContent = line;
   log.appendChild(div);
-  // Change 2: keep at most 200 lines
   while (log.children.length > 200) log.removeChild(log.firstChild);
   if (gAudioAutoScroll) log.scrollTop = log.scrollHeight;
 }
@@ -1108,18 +1104,22 @@ function parseSetting(payload) {
   if (!isNaN(id) && !isNaN(val)) {
     updateSettingUI(id, val);
     if (id === 200) {
-      updateModeBadge(val);
-      // If firmware left impact wave mode, reset the test dropdown to Off
-      if (val !== IMPACT_WAVE_SLOT) {
-        const iwCtrl = document.querySelector('[data-setting-id="122"]');
-        if (iwCtrl && parseInt(iwCtrl.value) !== 0) {
-          iwCtrl.value = 0;
-          gSettingsValues[122] = 0;
-        }
-      }
+      gCurrentMode = val;
+      updateEffectBadge(val);
+    }
+    if (id === 210) {
+      gCurrentAnimIdx = val;
+      updateEffectBadge(gCurrentMode);
+    }
+    if (id === 144) {
+      // Firmware switched playlist — sync local tab selection without re-sending
+      gDashPlaylistIdx = val;
+      document.querySelectorAll('.playlist-tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === val);
+      });
+      renderPlaylistPills();
     }
     if (id === 201) updateBriBadge(val);
-    // Calibration status
     if (id === 13) {
       appendCalOutput('S,' + payload);
       if (val === 1) setCalPhase('success');
@@ -1129,7 +1129,7 @@ function parseSetting(payload) {
 
 // ── Telemetry parser (T, lines) ───────────────────────────────────────────────
 function parseTelemetry(hex) {
-  if (hex.length < 72) return;  // 36 bytes = 72 hex chars
+  if (hex.length < 72) return;
   const bytes = new Uint8Array(hex.match(/.{2}/g).map(b => parseInt(b, 16)));
   if (bytes.length < 36) return;
   const dv = new DataView(bytes.buffer);
@@ -1161,43 +1161,35 @@ function parseTelemetry(hex) {
   const roll_q7  = dv.getInt8(off++);
   f.pitchDeg = pitch_q7 * 180.0 / 127.0;
   f.rollDeg  = roll_q7  * 180.0 / 127.0;
-  // reserved: off++
 
   renderTelemetry(f);
 }
 
-// Tap pill element IDs indexed by tap_event value (0=none, 1=axial+, 2=axial−, 3=lateral, 4=unknown)
-const TAP_PILL_IDS = [null, 'tapAxialPlus', 'tapAxialMinus', 'tapLateral', 'tapUnknown'];
+const TAP_PILL_IDS  = [null, 'tapAxialPlus', 'tapAxialMinus', 'tapLateral', 'tapUnknown'];
 const TAP_LOG_NAMES = ['', 'axial+', 'axial−', 'lateral', 'unknown'];
 
 function renderTelemetry(f) {
-  // Audio bars (prefer T frame when available)
   setBar('barBass',   f.bass);
   setBar('barMid',    f.mid);
   setBar('barTreble', f.treble);
   setBar('barEnergy', f.energy);
   if (f.beat || f.drop) flashBeat(f.beat, f.drop);
 
-  // IMU accel/gyro grid
   setText('imuAX', f.accel_x.toFixed(3) + 'g');
   setText('imuAY', f.accel_y.toFixed(3) + 'g');
   setText('imuAZ', f.accel_z.toFixed(3) + 'g');
   setText('imuGX', f.gyro_x + '°/s');
   setText('imuGY', f.gyro_y + '°/s');
   setText('imuGZ', f.gyro_z + '°/s');
-
-  // Pitch / Roll
   setText('imuPitch', f.pitchDeg.toFixed(1) + '°');
   setText('imuRoll',  f.rollDeg.toFixed(1)  + '°');
 
-  // Tilt: value + bar
   const tiltPct = (f.tilt_mag * 100).toFixed(0);
   setText('imuTilt', tiltPct + '%');
   const tiltBar = document.getElementById('tiltBar');
   if (tiltBar) tiltBar.style.width = tiltPct + '%';
 
-  // Spin: value + color class
-  const spinEl = document.getElementById('imuSpin');
+  const spinEl  = document.getElementById('imuSpin');
   const spinLbl = document.getElementById('spinLabel');
   if (spinEl) {
     spinEl.textContent = f.spin_rate.toFixed(0) + '°/s';
@@ -1207,7 +1199,6 @@ function renderTelemetry(f) {
     spinLbl.textContent = f.spin_rate < 50 ? 'stationary' : f.spin_rate < 200 ? 'slow spin' : 'fast spin';
   }
 
-  // Idle stage badge
   const idleBadge = document.getElementById('idleBadge');
   if (idleBadge) {
     if (!f.is_idle) {
@@ -1224,7 +1215,6 @@ function renderTelemetry(f) {
     }
   }
 
-  // Tap indicator pills — flash matching pill 600 ms
   if (f.tap_event !== 0 && f.tap_event < TAP_PILL_IDS.length) {
     const pillId = TAP_PILL_IDS[f.tap_event];
     if (pillId) {
@@ -1236,7 +1226,6 @@ function renderTelemetry(f) {
     }
   }
 
-  // Overlay flags (bit 0=sparkle, bit 1=tap burst, bit 2=idle dim, bit 3=drop panic)
   const setOverlay = (id, active) => {
     const el = document.getElementById(id);
     if (el) el.className = 'overlay-chip' + (active ? ' active' : '');
@@ -1247,32 +1236,38 @@ function renderTelemetry(f) {
   const dropEl = document.getElementById('overlayDrop');
   if (dropEl) dropEl.className = 'overlay-chip' + (!!(f.overlay_flags & 0x08) ? ' drop-active-chip' : '');
 
-  // SFLP status chip — green when in a SFLP-driven mode (14=Tilt Thermo, 15=Space Lock)
+  // SFLP runs at all times on the IMU task — show as always active
   const sflpEl = document.getElementById('sflpStatus');
-  if (sflpEl) sflpEl.className = 'overlay-chip' + (f.mode === 14 || f.mode === 15 ? ' sflp-active' : '');
+  if (sflpEl) sflpEl.className = 'overlay-chip sflp-active';
 
-  // Mode variation label (◄► hint for modes with named variants)
-  const varNames = MODE_VARIATION_NAMES[f.mode];
+  // Effect variation label (◄► hint)
+  let varText = '';
+  if (f.mode === 1 && f.variation < ANIMARTRIX_NAMES.length) {
+    varText = '◄► ' + ANIMARTRIX_NAMES[f.variation];
+  } else {
+    const varNames = EFFECT_VARIATION_NAMES[f.mode];
+    if (varNames && f.variation < varNames.length) varText = '◄► ' + varNames[f.variation];
+  }
   const varEl = document.getElementById('modeVariation');
-  if (varEl) varEl.textContent = varNames && f.variation < varNames.length ? '◄► ' + varNames[f.variation] : '';
+  if (varEl) varEl.textContent = varText;
 
-  // Mode / brightness state
-  updateModeBadge(f.mode);
+  // Track animIdx for playlist pill highlighting
+  if (f.mode === 1) gCurrentAnimIdx = f.variation;
+
+  updateEffectBadge(f.mode);
   updateBriBadge(f.brightness);
   updateSettingUI(200, f.mode);
   updateSettingUI(201, f.brightness);
 
-  // ── Motion log events ──────────────────────────────────────────────────────
+  // Motion log
   const nowMs = Date.now();
   const ts = () => gConnectTime ? '+' + ((nowMs - gConnectTime) / 1000).toFixed(1) + 's' : '+?s';
 
-  // Tap event → immediate log line
   if (f.tap_event !== 0) {
     const tapName = TAP_LOG_NAMES[f.tap_event] || '?';
     appendMotionLog(`${ts()}  TAP ${tapName}  tilt=${tiltPct}%  spin=${f.spin_rate.toFixed(0)}°/s`);
   }
 
-  // Idle state transitions
   if (gPrevIsIdle !== -1 && f.is_idle !== gPrevIsIdle) {
     if (f.is_idle) {
       gIdleStartMs = nowMs;
@@ -1282,12 +1277,10 @@ function renderTelemetry(f) {
       appendMotionLog(`${ts()}  IDLE exited  (motion resumed)`);
     }
   } else if (f.is_idle && gIdleStartMs === 0) {
-    // First frame after connect while already idle
     gIdleStartMs = nowMs;
   }
   gPrevIsIdle = f.is_idle;
 
-  // Overlay flag transitions
   if (gPrevOverlayFlags !== -1 && f.overlay_flags !== gPrevOverlayFlags) {
     const overlayNames = ['sparkle', 'tap-burst', 'idle-dim', 'drop-panic'];
     overlayNames.forEach((name, i) => {
@@ -1299,7 +1292,6 @@ function renderTelemetry(f) {
   }
   gPrevOverlayFlags = f.overlay_flags;
 
-  // Throttled tilt/spin summary every 2 seconds
   if (nowMs - gLastMotionLog >= 2000) {
     gLastMotionLog = nowMs;
     appendMotionLog(`${ts()}  tilt=${tiltPct}%  spin=${f.spin_rate.toFixed(0)}°/s  energy=${f.energy.toFixed(2)}`);
@@ -1311,16 +1303,24 @@ function setText(id, val) {
   if (el) el.textContent = val;
 }
 
-// Change 4: update cycle pill highlights when mode changes
-function updateModeBadge(mode) {
+// ── Effect badge — shows playlist entry name for Animartrix entries ───────────
+function updateEffectBadge(mode) {
+  gCurrentMode = mode;
   const el = document.getElementById('modeBadge');
-  if (el) el.textContent = mode + ' ' + (MODE_NAMES[mode] || '?');
+  if (el) {
+    let displayName = EFFECT_NAMES[mode] || '?';
+    if (mode === 1 && gCurrentAnimIdx >= 0) {
+      // Search all playlists for a matching Animartrix entry to show its name
+      for (const pl of PLAYLISTS) {
+        const entry = pl.entries.find(e => e.mode === 1 && e.animIdx === gCurrentAnimIdx);
+        if (entry) { displayName = entry.name; break; }
+      }
+    }
+    el.textContent = mode + ' ' + displayName;
+  }
   const sel = document.getElementById('modeSelect');
   if (sel && sel.value != mode) sel.value = mode;
-  // Refresh cycle pill highlights
-  document.querySelectorAll('.cycle-pill').forEach(pill => {
-    pill.classList.toggle('active', parseInt(pill.dataset.mode) === mode);
-  });
+  updateActivePlaylistEntry();
 }
 
 function updateBriBadge(bri) {
@@ -1330,21 +1330,64 @@ function updateBriBadge(bri) {
   if (val)  val.textContent = bri;
 }
 
+// ── Playlist UI ───────────────────────────────────────────────────────────────
+function switchPlaylist(idx) {
+  gDashPlaylistIdx = idx;
+  writeSetting(144, idx);
+  document.querySelectorAll('.playlist-tab').forEach((tab, i) => {
+    tab.classList.toggle('active', i === idx);
+  });
+  renderPlaylistPills();
+}
+
+function renderPlaylistPills() {
+  const container = document.getElementById('playlistPills');
+  if (!container) return;
+  container.innerHTML = '';
+  const playlist = PLAYLISTS[gDashPlaylistIdx];
+  playlist.entries.forEach((entry, idx) => {
+    const pill = document.createElement('span');
+    pill.className = 'cycle-pill playlist-pill';
+    pill.dataset.pillIdx = idx;
+    pill.textContent = (entry.fav ? '★ ' : '') + entry.name;
+    pill.title = 'Effect ' + entry.mode + (entry.animIdx >= 0 ? ', anim ' + entry.animIdx : '');
+    pill.addEventListener('click', () => {
+      writeSetting(200, entry.mode);
+      if (entry.animIdx >= 0) writeSetting(210, entry.animIdx);
+    });
+    container.appendChild(pill);
+  });
+  updateActivePlaylistEntry();
+}
+
+function updateActivePlaylistEntry() {
+  const playlist = PLAYLISTS[gDashPlaylistIdx];
+  document.querySelectorAll('.playlist-pill').forEach(pill => {
+    const pidx = parseInt(pill.dataset.pillIdx);
+    if (pidx < 0 || pidx >= playlist.entries.length) return;
+    const entry = playlist.entries[pidx];
+    let active = entry.mode === gCurrentMode;
+    if (active && entry.animIdx >= 0) active = (entry.animIdx === gCurrentAnimIdx);
+    pill.classList.toggle('active', active);
+  });
+}
+
+function buildPlaylistUI() {
+  const tabsContainer = document.getElementById('playlistTabs');
+  if (!tabsContainer) return;
+  PLAYLISTS.forEach((pl, idx) => {
+    const tab = document.createElement('button');
+    tab.className = 'playlist-tab' + (idx === gDashPlaylistIdx ? ' active' : '');
+    tab.textContent = pl.name;
+    tab.addEventListener('click', () => switchPlaylist(idx));
+    tabsContainer.appendChild(tab);
+  });
+  renderPlaylistPills();
+}
+
 // ── Write to device ───────────────────────────────────────────────────────────
 function writeSetting(id, value) {
   writeRaw(`$S ${id} ${value}\n`);
-}
-
-// Impact Wave test helper — when the dropdown changes, also switch/restore mode.
-const IMPACT_WAVE_SLOT = 17;
-function handleImpactWaveTypeChange(v) {
-  if (v > 0) {
-    const cur = gSettingsValues[200] ?? 0;
-    if (cur !== IMPACT_WAVE_SLOT) gImpWavePrevMode = cur;
-    writeSetting(200, IMPACT_WAVE_SLOT);
-  } else {
-    writeSetting(200, gImpWavePrevMode);
-  }
 }
 
 function writeRaw(str) {
@@ -1354,7 +1397,6 @@ function writeRaw(str) {
 
 function sendButton(id) {
   if (!gRxChar) return;
-  // Bluefruit Controller packet: !B<id_char><1><checksum>
   const idChar = typeof id === 'string' ? id.charCodeAt(0) : id;
   const sum = 0x21 + 0x42 + idChar + 0x31;
   const pkt = new Uint8Array([0x21, 0x42, idChar, 0x31, (~sum) & 0xFF]);
@@ -1370,7 +1412,6 @@ function sendCmd() {
 }
 
 function runImuCal() {
-  // Reset phase badges
   ['calPhaseA', 'calPhaseB'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('cal-active-a', 'cal-active-b', 'cal-done', 'cal-active-success', 'cal-active-fail');
@@ -1378,7 +1419,7 @@ function runImuCal() {
   const r = document.getElementById('calPhaseResult');
   if (r) {
     r.classList.remove('cal-active-a', 'cal-active-b', 'cal-done', 'cal-active-success', 'cal-active-fail');
-    r.textContent = '\u25CF Result';
+    r.textContent = '● Result';
   }
   writeSetting(13, 0);
   appendCalOutput('Sent $S 13 0 — waiting for firmware response...');
@@ -1392,39 +1433,23 @@ function appendCalOutput(line) {
   }
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-// Change 3: skipped modes now include 6, 8, 9, 12, 13
+// ── Effect selector dropdown ──────────────────────────────────────────────────
 function buildModeSelect() {
   const sel = document.getElementById('modeSelect');
   if (!sel) return;
-  MODE_NAMES.forEach((name, i) => {
+  EFFECT_NAMES.forEach((name, i) => {
     const o = document.createElement('option');
     o.value = i;
-    const isSkipped = SKIPPED_MODES.has(i);
-    o.textContent = i + ' — ' + name + (isSkipped ? ' (skipped)' : '');
-    if (isSkipped) o.dataset.skipped = '1';
-    sel.appendChild(o);
-  });
-}
-
-// Change 4: build clickable pill-chain for BLE Button 1 cycle
-function buildCyclePills() {
-  const container = document.getElementById('cyclePills');
-  if (!container) return;
-  CYCLE_MODES.forEach((modeId, idx) => {
-    if (idx > 0) {
-      const arrow = document.createElement('span');
-      arrow.className = 'cycle-arrow';
-      arrow.textContent = '→';
-      container.appendChild(arrow);
+    const isNotInPlaylist = (i === 3);
+    const isMotionOnly    = (i === 4 || i === 5);
+    let suffix = '';
+    if (isNotInPlaylist) suffix = ' (not in playlist)';
+    if (isMotionOnly)    suffix = ' (motion-triggered)';
+    o.textContent = i + ' — ' + name + suffix;
+    if (isNotInPlaylist || isMotionOnly) {
+      o.dataset.skipped = '1';
     }
-    const pill = document.createElement('span');
-    pill.className = 'cycle-pill';
-    pill.dataset.mode = modeId;
-    pill.textContent = MODE_NAMES[modeId] || String(modeId);
-    pill.title = 'Jump to mode ' + modeId;
-    pill.addEventListener('click', () => writeSetting(200, modeId));
-    container.appendChild(pill);
+    sel.appendChild(o);
   });
 }
 
@@ -1435,7 +1460,7 @@ function writeDiag(sub) {
 
 buildSettingsTables();
 buildModeSelect();
-buildCyclePills();
+buildPlaylistUI();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
