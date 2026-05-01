@@ -623,6 +623,7 @@ const RX_CHAR  = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
 // ── State ────────────────────────────────────────────────────────────────────
 let gDevice, gServer, gTxChar, gRxChar;
+let gWriteQueue = Promise.resolve();
 let lineBuffer = '';
 let gSettingsValues = {};  // id (number) → value (number)
 let gConnectTime = null;
@@ -1392,7 +1393,10 @@ function writeSetting(id, value) {
 
 function writeRaw(str) {
   if (!gRxChar) return;
-  gRxChar.writeValueWithoutResponse(new TextEncoder().encode(str)).catch(() => {});
+  const enc = new TextEncoder().encode(str);
+  gWriteQueue = gWriteQueue.then(() =>
+    gRxChar.writeValueWithoutResponse(enc).catch(() => {})
+  );
 }
 
 function sendButton(id) {
