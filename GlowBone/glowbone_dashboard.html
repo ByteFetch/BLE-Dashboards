@@ -786,7 +786,7 @@ const WAVE_PAL_NAMES = ['Blue','Red','Green','Rainbow'];
 
 const MODE_STATE = [
   { id: 200, name: 'mode',           type: 'mode_select',                              desc: 'Active effect slot' },
-  { id: 201, name: 'brightness',     type: 'int',    min: 10,  max: 255, step: 5,      desc: 'Current brightness (0–255)' },
+  { id: 201, name: 'brightness',     type: 'int',    min: 0,   max: 100, step: 5,      desc: 'Current brightness (0–100%)' },
   { id: 203, name: 'wave_palette',   type: 'select', options: WAVE_PAL_NAMES,           desc: 'Color palette for Wave (effect 0)' },
   { id: 210, name: 'animartrix_idx', type: 'select', options: ANIMARTRIX_NAMES,
     desc: 'Animartrix animation (0=RGB Blobs 5 … 51=Fluffy Blobs)' },
@@ -881,7 +881,7 @@ function updateSettingUI(id, val) {
   if (ctrl.type === 'checkbox') {
     ctrl.checked = (val !== 0);
   } else {
-    ctrl.value = val;
+    ctrl.value = (id === 201) ? Math.round(val / 2.55 / 5) * 5 : val;
   }
 }
 
@@ -1328,7 +1328,7 @@ function updateBriBadge(bri) {
   const fill = document.getElementById('briBadge');
   const val  = document.getElementById('briVal');
   if (fill) fill.style.width = (bri / 255 * 100) + '%';
-  if (val)  val.textContent = bri;
+  if (val)  val.textContent = Math.round(bri / 2.55 / 5) * 5 + '%';
 }
 
 // ── Playlist UI ───────────────────────────────────────────────────────────────
@@ -1388,7 +1388,8 @@ function buildPlaylistUI() {
 
 // ── Write to device ───────────────────────────────────────────────────────────
 function writeSetting(id, value) {
-  writeRaw(`$S ${id} ${value}\n`);
+  const raw = (id === 201) ? Math.round(value * 2.55) : value;
+  writeRaw(`$S ${id} ${raw}\n`);
 }
 
 function writeRaw(str) {
