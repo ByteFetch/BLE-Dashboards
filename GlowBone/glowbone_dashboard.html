@@ -315,6 +315,21 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
 .dpad-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 6px; max-width: 160px; }
 .dpad-center { background: transparent !important; border: none !important; pointer-events: none; }
 
+/* NVS Backup dump pane */
+#settingsDump {
+  width: 100%;
+  height: 140px;
+  background: #0f1117;
+  color: #a3e635;
+  border: 1px solid #2a2d3a;
+  border-radius: 4px;
+  padding: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
 /* Calibration */
 #calOutput {
   width: 100%;
@@ -564,6 +579,19 @@ h3 { font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: upperc
     </div>
 
   </div>
+
+  <!-- NVS Backup -->
+  <div style="margin-top:14px;border-top:1px solid #374151;padding-top:12px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+      <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;">NVS Backup</span>
+      <button class="apply-btn" onclick="dumpSettingsToPane()">Dump All Settings</button>
+      <button class="apply-btn" onclick="copySettingsDump()">Copy</button>
+      <button class="apply-btn" onclick="clearSettingsDump()">Clear</button>
+      <span style="font-size:10px;color:#4b5563;">Connect first — values are populated on connect. Copy and save to file.</span>
+    </div>
+    <textarea id="settingsDump" readonly placeholder="Click 'Dump All Settings' to export current NVS values as CSV..."></textarea>
+  </div>
+
 </div>
 
 <!-- ── Calibration ─────────────────────────────────────────────────────────── -->
@@ -1072,6 +1100,77 @@ function toggleMotionScroll() {
   gMotionAutoScroll = !gMotionAutoScroll;
   const btn = document.getElementById('motionScrollBtn');
   if (btn) btn.textContent = 'Auto-scroll ' + (gMotionAutoScroll ? '✓' : '✗');
+}
+
+// ── NVS Backup dump ───────────────────────────────────────────────────────────
+// Mirrors firmware gSettings[] — id, firmware name, nvs_key, default_val.
+// Source of truth: src/glowbone_settings.h. Update here when new settings are added.
+const SETTINGS_META = [
+  {id:   1, name: 'idle_delay_sec',          nvs: 'idleDelay',   def: 20   },
+  {id:   2, name: 'idle_brightness',         nvs: 'idleBri',     def: 30   },
+  {id:   3, name: 'tap_threshold_mg',        nvs: 'tapThresh',   def: 1500 },
+  {id:   4, name: 'tap_holdoff_ms',          nvs: 'tapHold',     def: 250  },
+  {id:   5, name: 'beat_sensitivity',        nvs: 'beatSens',    def: 50   },
+  {id:   6, name: 'mic_gain',               nvs: 'micGain',     def: 40   },
+  {id:   7, name: 'max_brightness',          nvs: 'maxBri',      def: 255  },
+  {id:   8, name: 'plotter_legacy',          nvs: 'plotLeg',     def: 1    },
+  {id:   9, name: 'telemetry_rate',          nvs: 'telRate',     def: 10   },
+  {id:  10, name: 'idle_enabled',            nvs: 'idleEn',      def: 1    },
+  {id:  11, name: 'imu_long_axis',           nvs: 'imuAxis',     def: 0    },
+  {id:  12, name: 'tap_overlay_enabled',     nvs: 'tapEn',       def: 1    },
+  {id:  13, name: 'imu_calibrated',          nvs: 'imuCal',      def: 0    },
+  {id: 100, name: 'auto_cal_enabled',        nvs: 'autoCal',     def: 1    },
+  {id: 101, name: 'gravity_palette',         nvs: 'gravPal',     def: 0    },
+  {id: 103, name: 'tap_burst_duration_ms',   nvs: 'tapDur',      def: 700  },
+  {id: 104, name: 'tap_burst_color',         nvs: 'tapColor',    def: 1    },
+  {id: 108, name: 'idle_stage1_sec',         nvs: 'idlS1',       def: 60   },
+  {id: 109, name: 'idle_stage2_sec',         nvs: 'idlS2',       def: 90   },
+  {id: 110, name: 'idle_stage3_sec',         nvs: 'idlS3',       def: 120  },
+  {id: 111, name: 'tap_lateral_duration_ms', nvs: 'tapLatMs',    def: 700  },
+  {id: 112, name: 'tap_sweep_pct',           nvs: 'tapSwPct',    def: 40   },
+  {id: 119, name: 'effect_splat',            nvs: 'effSpl',      def: 1    },
+  {id: 120, name: 'signal_conditioning',     nvs: 'nfTrack',     def: 0    },
+  {id: 121, name: 'audio_preset',            nvs: 'audPreset',   def: 0    },
+  {id: 123, name: 'iwl_speed',              nvs: 'iwlSpd',      def: 1    },
+  {id: 124, name: 'iwl_spark',              nvs: 'iwlSpark',    def: 5    },
+  {id: 125, name: 'iwl_sharp',              nvs: 'iwlSharp',    def: 3    },
+  {id: 126, name: 'iwl_radial',             nvs: 'iwlRadial',   def: 15   },
+  {id: 127, name: 'iwl_drift',              nvs: 'iwlDrift',    def: 5    },
+  {id: 128, name: 'iwl_scale',              nvs: 'iwlScale',    def: 5    },
+  {id: 129, name: 'iwl_decay',              nvs: 'iwlDecay',    def: 10   },
+  {id: 130, name: 'iwa_speed',              nvs: 'iwaxSpd',     def: 3    },
+  {id: 131, name: 'iwa_spark_density',      nvs: 'iwaxSpark',   def: 5    },
+  {id: 132, name: 'iwa_sharpness',          nvs: 'iwaxSharp',   def: 3    },
+  {id: 133, name: 'iwa_radial_boost',       nvs: 'iwaxRadial',  def: 15   },
+  {id: 134, name: 'iwa_color_drift',        nvs: 'iwaxDrift',   def: 5    },
+  {id: 135, name: 'iwa_scale',              nvs: 'iwaxScale',   def: 20   },
+  {id: 136, name: 'iwa_spark_decay',        nvs: 'iwaxDecay',   def: 10   },
+  {id: 137, name: 'tap_spark_seed',         nvs: 'tapSpkSeed',  def: 4    },
+  {id: 138, name: 'tap_spark_twinkle',      nvs: 'tapSpkTwnk',  def: 3    },
+  {id: 139, name: 'tap_spark_bri',          nvs: 'tapSpkBri',   def: 180  },
+  {id: 140, name: 'tap_spark_decay',        nvs: 'tapSpkDcy',   def: 15   },
+  {id: 141, name: 'transition_ms',          nvs: 'transMs',     def: 500  },
+  {id: 142, name: 'popcon_speed',           nvs: 'pcSpeed',     def: 50   },
+  {id: 143, name: 'popcon_use_audio',       nvs: 'pcAudio',     def: 1    },
+  {id: 144, name: 'playlist',              nvs: 'playlist',    def: 0    },
+];
+
+function dumpSettingsToPane() {
+  const lines = ['id,name,current,default,nvs_key'];
+  for (const m of SETTINGS_META) {
+    const cur = gSettingsValues[m.id] !== undefined ? gSettingsValues[m.id] : '?';
+    lines.push(`${m.id},${m.name},${cur},${m.def},${m.nvs}`);
+  }
+  document.getElementById('settingsDump').value = lines.join('\n');
+}
+
+function copySettingsDump() {
+  const ta = document.getElementById('settingsDump');
+  if (ta.value) navigator.clipboard.writeText(ta.value).catch(() => {});
+}
+
+function clearSettingsDump() {
+  document.getElementById('settingsDump').value = '';
 }
 
 function setBar(id, val) {
